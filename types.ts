@@ -21,6 +21,7 @@ export interface UserSeries extends Series {
   status: SeriesStatus;
   addedAt: number;
   personalNote?: string; // O comentário do dono do perfil
+  ranking?: number; // <--- NOVO: 1, 2, 3 para o Top 3 (ou 0 se não estiver no pódio)
 }
 
 export interface GeminiSearchResult {

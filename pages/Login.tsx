@@ -11,6 +11,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Novo estado para mostrar/esconder senha
+  const [showPassword, setShowPassword] = useState(false);
+
   // Form States
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,11 +29,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     try {
       if (isRegistering) {
         // --- LÓGICA DE REGISTRO ---
+
+        // 1. Valida se as senhas batem
         if (password !== confirmPassword) {
           throw new Error("As senhas não coincidem.");
         }
-        if (password.length < 4) {
-          throw new Error("Senha muito curta (mínimo 4 caracteres).");
+
+        // 2. Valida tamanho (mínimo 6)
+        if (password.length < 6) {
+          throw new Error("Senha muito curta (mínimo 6 caracteres).");
+        }
+
+        // 3. Valida se tem número (Regex: \d procura digito)
+        const hasNumber = /\d/.test(password);
+        if (!hasNumber) {
+          throw new Error("A senha precisa ter pelo menos um número.");
         }
 
         const response = await fetch("http://localhost:3001/api/register", {
@@ -45,11 +58,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         });
 
         const data = await response.json();
+
+        // Pega erro de email ou nome duplicado
         if (!response.ok) throw new Error(data.error || "Falha no registro");
 
-        setShowSuccess(true); // Mostra o modal de sucesso
+        setShowSuccess(true);
       } else {
-        // --- LÓGICA DE LOGIN (Agora Real!) ---
+        // --- LÓGICA DE LOGIN ---
         const response = await fetch("http://localhost:3001/api/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -62,14 +77,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           throw new Error(data.error || "Falha ao entrar.");
         }
 
-        // Se o login deu certo:
-        // 1. Salva os dados do usuário no navegador para o app usar
         localStorage.setItem("userProfile", JSON.stringify(data.user));
-
-        // 2. Avisa o App.tsx que estamos logados
         onLogin();
-
-        // 3. Redireciona
         navigate("/");
       }
     } catch (err: any) {
@@ -86,11 +95,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setShowPassword(false); // Reseta a visualização da senha
   };
 
   const handleCloseSuccess = () => {
     setShowSuccess(false);
-    toggleMode(); // Vai para a tela de login
+    toggleMode();
   };
 
   return (
@@ -117,7 +127,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </p>
         </div>
 
-        {/* Clean Light Card */}
+        {/* Card Principal */}
         <div className="bg-white border border-slate-100 p-8 rounded-3xl shadow-xl shadow-slate-200/50 animate-fade-in">
           <h2 className="text-2xl font-bold text-slate-800 mb-2 font-heading">
             {isRegistering ? "Nova Assinatura" : "De volta ao sofá?"}
@@ -138,7 +148,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full pl-4 pr-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-all font-medium"
-                    placeholder="Como quer ser chamado?"
+                    placeholder="Nome de usuário (único)"
                   />
                 </div>
               </div>
@@ -146,7 +156,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
             <div className="relative group">
               <input
-                type="text"
+                type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-4 pr-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-all font-medium"
@@ -156,20 +167,66 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
 
+            {/* CAMPO DE SENHA COM OLHO MÁGICO */}
             <div className="relative group">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"} // Alterna o tipo
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-4 pr-4 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-all font-medium"
-                placeholder="Senha"
+                className="w-full pl-4 pr-12 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-all font-medium"
+                placeholder="Senha (min 6 caracteres + número)"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors focus:outline-none"
+              >
+                {showPassword ? (
+                  // Ícone Olho Aberto
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                ) : (
+                  // Ícone Olho Fechado
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-5 h-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {isRegistering && (
               <div className="relative group">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"} // Segue o mesmo estado
                   required={isRegistering}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -179,6 +236,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
+            {/* Exibição de Erro */}
             {error && (
               <div className="p-3 bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-xl flex items-center gap-2 animate-pulse">
                 <svg
@@ -201,7 +259,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-slate-900/10 transition-all transform active:scale-95 flex items-center justify-center mt-6"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-slate-900/10 transition-all transform active:scale-95 flex items-center justify-center mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <svg
@@ -237,7 +295,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               {isRegistering ? "Já tem conta?" : "Primeira vez aqui?"}
               <button
                 onClick={toggleMode}
-                className="ml-2 text-rose-600 font-bold hover:text-rose-700 transition-colors hover:underline"
+                className="ml-2 text-rose-600 font-bold hover:text-rose-700 transition-colors hover:underline outline-none"
               >
                 {isRegistering ? "Faça login" : "Cadastre-se"}
               </button>

@@ -29,12 +29,24 @@ app.post("/api/register", async (req, res) => {
     return res.status(400).json({ error: "Dados incompletos" });
 
   try {
+    // VERIFICAÇÃO DUPLA: Email ou Nome
     const [existing] = await db.query(
-      "SELECT * FROM ma_users WHERE email = ?",
-      [email]
+      "SELECT * FROM ma_users WHERE email = ? OR name = ?",
+      [email, name]
     );
-    if (existing.length > 0)
-      return res.status(409).json({ error: "Email já cadastrado" });
+
+    if (existing.length > 0) {
+      // Vamos descobrir qual dos dois já existe para avisar o usuário
+      const userExists = existing[0];
+      if (userExists.email === email) {
+        return res.status(409).json({ error: "Email já cadastrado" });
+      }
+      if (userExists.name === name) {
+        return res
+          .status(409)
+          .json({ error: "Este nome de usuário já está em uso" });
+      }
+    }
 
     const hash = await bcrypt.hash(password, 10);
     const [result] = await db.query(
@@ -47,7 +59,6 @@ app.post("/api/register", async (req, res) => {
     res.status(500).json({ error: "Erro no registro" });
   }
 });
-
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -71,7 +82,7 @@ app.post("/api/login", async (req, res) => {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
-        coverTheme: user.cover_theme,
+        coverTheme: user.cover_theme, // Envia o tema salvo
         bio: user.bio,
       },
     });
@@ -87,7 +98,7 @@ app.post("/api/login", async (req, res) => {
 
 // --- Busca na TMDB ---
 app.post("/api/search", async (req, res) => {
-  const { query, page } = req.body; // Recebe a página
+  const { query, page } = req.body;
   if (!query) return res.status(400).json({ error: "Faltou a busca" });
 
   const pageNumber = page || 1;
@@ -126,7 +137,7 @@ app.post("/api/search", async (req, res) => {
   }
 });
 
-// --- Recomendações (CORRIGIDO: Agora retorna Poster) ---
+// --- Recomendações ---
 app.post("/api/recommendations", async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/tv/popular`, {
@@ -148,7 +159,7 @@ app.post("/api/recommendations", async (req, res) => {
         avgEpisodeDuration: 45,
         poster: item.poster_path
           ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
-          : null, // ADICIONADO
+          : null,
         id: item.id.toString(),
       }))
       .slice(0, 4);
@@ -160,7 +171,7 @@ app.post("/api/recommendations", async (req, res) => {
   }
 });
 
-// --- Salvar Série ---
+// --- Salvar Série (CORRIGIDO: Retorna o ID do banco) ---
 app.post("/api/series", async (req, res) => {
   const { user_id, series } = req.body;
 
@@ -170,9 +181,11 @@ app.post("/api/series", async (req, res) => {
       [user_id, series.title]
     );
     if (exists.length > 0)
-      return res.status(200).json({ message: "Série já está na lista" });
+      return res
+        .status(200)
+        .json({ message: "Série já está na lista", id: exists[0].id });
 
-    await db.query(
+    const [result] = await db.query(
       `INSERT INTO ma_user_series 
        (user_id, series_id, title, year, synopsis, genres, status, total_seasons, total_episodes, avg_duration, poster) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -190,10 +203,58 @@ app.post("/api/series", async (req, res) => {
         series.poster,
       ]
     );
-    res.json({ success: true });
+    // Retorna o ID gerado (insertId) para o frontend usar corretamente
+    res.json({ success: true, id: result.insertId });
   } catch (error) {
     console.error("Erro ao salvar série:", error);
     res.status(500).json({ error: "Erro ao salvar série" });
+  }
+});
+
+// --- Atualizar Ranking (Top 3) ---
+app.patch("/api/series/:id/rank", async (req, res) => {
+  const { id } = req.params; // ID da série no banco
+  const { userId, rank } = req.body;
+
+  console.log(`Atualizando rank: User ${userId}, Série ${id} -> Rank ${rank}`);
+
+  try {
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Limpa o dono anterior da posição (se houver)
+      if (rank > 0) {
+        await connection.query(
+          "UPDATE ma_user_series SET favorite_rank = 0 WHERE user_id = ? AND favorite_rank = ?",
+          [userId, rank]
+        );
+      }
+
+      // 2. Define o novo dono da posição
+      const [updateResult] = await connection.query(
+        "UPDATE ma_user_series SET favorite_rank = ? WHERE id = ?",
+        [rank, id]
+      );
+
+      await connection.commit();
+
+      if (updateResult.affectedRows === 0) {
+        console.warn(
+          `Aviso: Nenhuma série atualizada para o ID ${id}. Verifique se o ID está correto.`
+        );
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("Erro crítico ao atualizar ranking:", error);
+    res.status(500).json({ error: "Erro no servidor" });
   }
 });
 
@@ -213,7 +274,7 @@ app.delete("/api/series/:userId/:title", async (req, res) => {
   }
 });
 
-// --- Rota User Full ---
+// --- Rota User Full (CORRIGIDA) ---
 app.get("/api/users/:id/full", async (req, res) => {
   const { id } = req.params;
   try {
@@ -232,9 +293,12 @@ app.get("/api/users/:id/full", async (req, res) => {
       ...s,
       genres:
         typeof s.genres === "string" ? JSON.parse(s.genres || "[]") : s.genres,
+      // Mapeia o ranking do banco para o frontend
+      ranking: s.favorite_rank || 0,
     }));
 
     res.json({
+      // Mapeia cover_theme do banco para coverTheme do frontend
       user: { ...users[0], coverTheme: users[0].cover_theme },
       myList: formattedSeries,
     });

@@ -497,7 +497,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           <MatchCinefilo myList={myList} />
-          <TrendingRanking />
+          {/* Atualização aqui: Passando myList para o Ranking */}
+          <TrendingRanking myList={myList} />
+
           {recommendations.length > 0 && (
             <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
