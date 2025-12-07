@@ -1,0 +1,5 @@
+{
+  "name": "Maratonei",
+  "description": "Uma rede social pessoal para rastrear suas séries favoritas. Busque séries usando IA, marque como 'Assistindo' ou 'Assistido' e organize sua maratona. Powered by Gemini 2.5 Flash.",
+  "requestFramePermissions": []
+}
