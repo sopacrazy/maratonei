@@ -1,3 +1,4 @@
+//
 import React, { useState, useEffect } from "react";
 import {
   HashRouter,
@@ -13,6 +14,7 @@ import PublicProfile from "./pages/PublicProfile";
 import ProfileConfig from "./pages/ProfileConfig";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
+import PostDetail from "./pages/PostDetail"; // Nova página de post
 import { UserSeries, Series, SeriesStatus, UserProfile } from "./types";
 
 const LayoutWrapper: React.FC<{
@@ -36,7 +38,6 @@ const ProtectedRoute: React.FC<{
   isLoading: boolean;
   children: React.ReactNode;
 }> = ({ isAuthenticated, needsOnboarding, isLoading, children }) => {
-  // 1. Se estiver carregando, mostra tela de loading (não redireciona ainda)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-bold">
@@ -45,17 +46,14 @@ const ProtectedRoute: React.FC<{
     );
   }
 
-  // 2. Se não estiver logado, manda pro login
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  // 3. Se estiver logado MAS não tiver Bio, manda pro Onboarding
   if (needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 4. Tudo certo? Mostra o conteúdo (Dashboard, etc)
   return <>{children}</>;
 };
 
@@ -82,11 +80,8 @@ const App: React.FC = () => {
   });
 
   const [myList, setMyList] = useState<UserSeries[]>([]);
-
-  // Começamos carregando se tivermos um ID salvo
   const [isLoading, setIsLoading] = useState<boolean>(!!userId);
 
-  // Busca dados completos do banco
   const fetchUserData = async () => {
     if (!userId) {
       setIsLoading(false);
@@ -99,18 +94,14 @@ const App: React.FC = () => {
       );
       if (response.ok) {
         const data = await response.json();
-
-        // Atualiza estados
         setUserProfile(data.user);
         setMyList(data.myList);
-
-        // Atualiza localStorage para a próxima vez ser mais rápido
         localStorage.setItem("userProfile", JSON.stringify(data.user));
       }
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
-      setIsLoading(false); // Fim do carregamento
+      setIsLoading(false);
     }
   };
 
@@ -133,7 +124,7 @@ const App: React.FC = () => {
       setUserId(parsed.id);
       setUserProfile(parsed);
       setIsAuthenticated(true);
-      setIsLoading(true); // Força um loading rápido para validar os dados
+      setIsLoading(true);
     }
   };
 
@@ -145,9 +136,12 @@ const App: React.FC = () => {
     localStorage.clear();
   };
 
+  // --- LÓGICA INTELIGENTE DE STATUS E ATIVIDADE ---
   const handleUpdateStatus = async (series: Series, status: SeriesStatus) => {
+    // 1. Atualização Otimista (Visual Imediato)
     setMyList((prev) => {
-      const existingIndex = prev.findIndex((s) => s.id === series.id);
+      const existingIndex = prev.findIndex((s) => s.title === series.title);
+
       if (existingIndex >= 0) {
         const newList = [...prev];
         newList[existingIndex] = { ...newList[existingIndex], status };
@@ -160,33 +154,44 @@ const App: React.FC = () => {
       }
     });
 
+    // 2. Atualização no Backend (Gera as atividades no feed)
     if (userId) {
-      await fetch("http://localhost:3001/api/series", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          series: { ...series, status },
-        }),
-      });
+      const exists = myList.some((s) => s.title === series.title);
+
+      if (exists) {
+        await fetch("http://localhost:3001/api/series/status", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            seriesTitle: series.title,
+            newStatus: status,
+            poster: series.poster,
+          }),
+        });
+      } else {
+        await fetch("http://localhost:3001/api/series", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            series: { ...series, status },
+          }),
+        });
+      }
     }
   };
 
   const handleRemove = async (id: string) => {
-    // 1. Encontra a série na lista antes de remover para pegar o Título
     const seriesToRemove = myList.find((s) => s.id === id);
 
     if (!seriesToRemove) return;
 
-    // 2. Atualização Otimista (Remove da tela na hora)
     setMyList((prev) => prev.filter((s) => s.id !== id));
 
-    // 3. Remove do Banco de Dados
     if (userId) {
       try {
-        // Encodamos o título para poder passar na URL (resolve espaços e caracteres especiais)
         const encodedTitle = encodeURIComponent(seriesToRemove.title);
-
         await fetch(
           `http://localhost:3001/api/series/${userId}/${encodedTitle}`,
           {
@@ -195,7 +200,6 @@ const App: React.FC = () => {
         );
       } catch (err) {
         console.error("Erro ao deletar do banco:", err);
-        // Opcional: Se der erro, você poderia adicionar de volta à lista aqui
       }
     }
   };
@@ -205,7 +209,6 @@ const App: React.FC = () => {
       prev.map((s) => (s.id === id ? { ...s, personalNote: note } : s))
     );
 
-  // A Lógica Mágica: Só pede onboarding se NÃO estiver carregando E a bio estiver vazia
   const needsOnboarding =
     !isLoading && (!userProfile.bio || userProfile.bio.trim() === "");
 
@@ -284,6 +287,20 @@ const App: React.FC = () => {
             path="/profile/:userId"
             element={
               <PublicProfile myList={myList} userProfile={userProfile} />
+            }
+          />
+
+          {/* Rota para o detalhe do post */}
+          <Route
+            path="/post/:id"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                needsOnboarding={needsOnboarding}
+                isLoading={isLoading}
+              >
+                <PostDetail />
+              </ProtectedRoute>
             }
           />
         </Routes>

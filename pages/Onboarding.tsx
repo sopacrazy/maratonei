@@ -1,11 +1,12 @@
+//
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserProfile, Series, SeriesStatus } from "../types";
-import StatusBadge from "../components/StatusBadge"; // Importando para usar se necessário, mas o design atual usa badges manuais
 
 interface OnboardingProps {
-  user: UserProfile & { id: number }; // Precisamos do ID do banco
-  onComplete: () => void;
+  user: UserProfile & { id: number };
+  // Alteração aqui: permitimos que retorne uma Promise para podermos usar await
+  onComplete: () => Promise<void> | void;
 }
 
 const THEMES = ["sunset", "ocean", "forest", "berry", "midnight", "minimal"];
@@ -50,7 +51,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
     setFormData((prev) => ({ ...prev, coverTheme: theme }));
   };
 
-  // Passo 3: Buscar Série (CORRIGIDO PARA NOVA API)
+  // Passo 3: Buscar Série
   const searchSeries = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery) return;
@@ -64,20 +65,15 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       });
 
       const data = await res.json();
-
-      // CORREÇÃO: O backend retorna { results: [...], total_pages: ... }
-      // Precisamos acessar data.results
       const resultsArray = data.results || [];
 
       if (Array.isArray(resultsArray)) {
         const formatted = resultsArray.map((item: any) => ({
           ...item,
-          // Garante ID como string para evitar erros de chave
           id: item.id ? item.id.toString() : `${item.title}-${item.year}`,
         }));
         setSearchResults(formatted);
       } else {
-        console.error("Formato inesperado da API:", data);
         setSearchResults([]);
       }
     } catch (error) {
@@ -96,7 +92,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
     }
   };
 
-  // FINALIZAR
+  // --- FINALIZAR (A CORREÇÃO ESTÁ AQUI) ---
   const handleFinish = async () => {
     setLoading(true);
 
@@ -120,7 +116,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
         });
       }
 
-      onComplete(); // Atualiza o estado do App
+      // 3. ATUALIZA O APP E ESPERA TERMINAR ANTES DE NAVEGAR
+      await onComplete();
+
+      // 4. Agora sim, vai pra Home
       navigate("/");
     } catch (error) {
       console.error("Erro ao finalizar", error);
@@ -130,7 +129,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center py-10 px-4 font-sans">
       {/* Barra de Progresso */}
       <div className="w-full max-w-2xl mb-8 flex items-center justify-between px-4">
         {[1, 2, 3].map((i) => (
@@ -364,9 +363,35 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
             <button
               onClick={handleFinish}
               disabled={selectedSeries.length < 3 || loading}
-              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition-all text-lg shadow-lg shadow-green-500/20 mt-4 active:scale-95"
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition-all text-lg shadow-lg shadow-green-500/20 mt-4 active:scale-95 flex items-center justify-center gap-2"
             >
-              {loading ? "Salvando tudo..." : "Finalizar e Entrar! 🚀"}
+              {loading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Finalizando...
+                </>
+              ) : (
+                "Finalizar e Entrar! 🚀"
+              )}
             </button>
           </div>
         )}

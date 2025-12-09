@@ -1,3 +1,4 @@
+//
 export enum SeriesStatus {
   WATCHING = "Watching",
   WATCHED = "Watched",
@@ -5,23 +6,23 @@ export enum SeriesStatus {
 }
 
 export interface Series {
-  id: string; // generated via title-year-slug
+  id: string;
   title: string;
   year: string;
   synopsis: string;
   genres: string[];
-  matchScore?: number; // Simulated "match" percentage
+  matchScore?: number;
   totalSeasons?: number;
-  totalEpisodes?: number; // New: Total episodes count
-  avgEpisodeDuration?: number; // New: Average minutes per episode
-  poster?: string | null; // Nova propriedade para a imagem da capa (TMDB)
+  totalEpisodes?: number;
+  avgEpisodeDuration?: number;
+  poster?: string | null;
 }
 
 export interface UserSeries extends Series {
   status: SeriesStatus;
   addedAt: number;
-  personalNote?: string; // O comentário do dono do perfil
-  ranking?: number; // <--- NOVO: 1, 2, 3 para o Top 3 (ou 0 se não estiver no pódio)
+  personalNote?: string;
+  ranking?: number;
 }
 
 export interface GeminiSearchResult {
@@ -46,6 +47,17 @@ export interface UserProfile {
   name: string;
   bio: string;
   avatar: string;
-  // Alterado para string para aceitar URLs personalizadas ou os nomes dos temas 'sunset', 'ocean', etc.
   coverTheme: string;
+  // --- NOVOS CAMPOS ---
+  followersCount?: number;
+  followingCount?: number;
+}
+export interface Notification {
+  id: number;
+  actor_name: string;
+  actor_avatar: string;
+  type: "LIKE" | "COMMENT" | "FOLLOW";
+  activity_id?: number;
+  is_read: boolean; // MySQL retorna 0 ou 1, tratar como boolean no front
+  created_at: string;
 }

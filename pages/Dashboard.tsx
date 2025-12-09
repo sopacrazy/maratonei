@@ -14,7 +14,6 @@ interface DashboardProps {
   onUpdateNote: (id: string, note: string) => void;
 }
 
-// Estendendo o Enum localmente para incluir a aba de Feed
 enum DashboardTab {
   FEED = "Início",
   WATCHING = "Assistindo",
@@ -31,7 +30,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   onRemove,
   onUpdateNote,
 }) => {
-  // Estado inicial agora é o FEED
   const [activeTab, setActiveTab] = useState<DashboardTab | SeriesStatus>(
     DashboardTab.FEED
   );
@@ -39,11 +37,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [loadingRecs, setLoadingRecs] = useState(false);
   const navigate = useNavigate();
 
-  // --- NOVOS ESTADOS ---
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Filter lists
   const watchingList = useMemo(
     () => myList.filter((s) => s.status === SeriesStatus.WATCHING),
     [myList]
@@ -57,7 +53,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     [myList]
   );
 
-  // Define qual lista mostrar baseada na aba
   const currentList =
     activeTab === SeriesStatus.WATCHING
       ? watchingList
@@ -67,7 +62,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       ? wantList
       : [];
 
-  // Lógica de Expansão
   const displayedList = isExpanded
     ? currentList
     : currentList.slice(0, INITIAL_LIMIT);
@@ -76,22 +70,18 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsExpanded(false);
   }, [activeTab]);
 
-  // Stats Calculation
   const timeStats = useMemo(() => {
     const totalMinutes = watchedList.reduce((acc, series) => {
       const eps = series.totalEpisodes || 10;
       const duration = series.avgEpisodeDuration || 45;
       return acc + eps * duration;
     }, 0);
-
     const months = Math.floor(totalMinutes / (60 * 24 * 30));
     const days = Math.floor((totalMinutes % (60 * 24 * 30)) / (60 * 24));
     const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-
     return { months, days, hours, totalMinutes };
   }, [watchedList]);
 
-  // Fetch recommendations
   useEffect(() => {
     const fetchRecs = async () => {
       setLoadingRecs(true);
@@ -120,10 +110,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         setLoadingRecs(false);
       }
     };
-
-    if (recommendations.length === 0) {
-      fetchRecs();
-    }
+    if (recommendations.length === 0) fetchRecs();
   }, [myList]);
 
   const isCustomImage = useMemo(() => {
@@ -139,50 +126,30 @@ const Dashboard: React.FC<DashboardProps> = ({
         backgroundPosition: "center",
       };
     }
-    switch (userProfile.coverTheme) {
-      case "ocean":
-        return {
-          backgroundImage:
-            "linear-gradient(to right, #3b82f6, #22d3ee, #2dd4bf)",
-        };
-      case "forest":
-        return {
-          backgroundImage:
-            "linear-gradient(to right, #059669, #22c55e, #a3e635)",
-        };
-      case "berry":
-        return {
-          backgroundImage:
-            "linear-gradient(to right, #c026d3, #a855f7, #f472b6)",
-        };
-      case "midnight":
-        return {
-          backgroundImage:
-            "linear-gradient(to right, #0f172a, #581c87, #0f172a)",
-        };
-      case "minimal":
-        return {
-          backgroundImage: "linear-gradient(to right, #334155, #1e293b)",
-        };
-      default:
-        return {
-          backgroundImage:
-            "linear-gradient(to right, #f43f5e, #fb923c, #eab308)",
-        };
-    }
+    const themes: Record<string, string> = {
+      ocean: "linear-gradient(to right, #3b82f6, #22d3ee, #2dd4bf)",
+      forest: "linear-gradient(to right, #059669, #22c55e, #a3e635)",
+      berry: "linear-gradient(to right, #c026d3, #a855f7, #f472b6)",
+      midnight: "linear-gradient(to right, #0f172a, #581c87, #0f172a)",
+      minimal: "linear-gradient(to right, #334155, #1e293b)",
+    };
+    return {
+      backgroundImage:
+        themes[userProfile.coverTheme] ||
+        "linear-gradient(to right, #f43f5e, #fb923c, #eab308)",
+    };
   };
 
   return (
     <div className="space-y-10 animate-fade-in pb-12">
       {/* Header Stats */}
       <div
-        className={`rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200 text-white relative overflow-hidden transition-all duration-500`}
+        className="rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200 text-white relative overflow-hidden transition-all duration-500"
         style={getHeaderStyle()}
       >
-        {isCustomImage && (
+        {isCustomImage ? (
           <div className="absolute inset-0 bg-black/50 backdrop-blur-[1px]"></div>
-        )}
-        {!isCustomImage && (
+        ) : (
           <>
             <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
@@ -242,9 +209,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         {/* Main Content Column */}
         <div className="lg:col-span-2 space-y-8">
-          {/* TAB & VIEW CONTROLS */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            {/* Tabs */}
             <div className="bg-white p-1.5 rounded-full shadow-sm border border-slate-200 inline-flex gap-1 overflow-x-auto max-w-full">
               {[
                 DashboardTab.FEED,
@@ -252,13 +217,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                 SeriesStatus.WANT_TO_WATCH,
                 SeriesStatus.WATCHED,
               ].map((status) => {
-                // Map Labels
                 let label = "";
                 let count = 0;
-
-                if (status === DashboardTab.FEED) {
-                  label = "Início";
-                } else if (status === SeriesStatus.WATCHING) {
+                if (status === DashboardTab.FEED) label = "Início";
+                else if (status === SeriesStatus.WATCHING) {
                   label = "Assistindo";
                   count = watchingList.length;
                 } else if (status === SeriesStatus.WATCHED) {
@@ -295,8 +257,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                 );
               })}
             </div>
-
-            {/* View Toggle (Só mostra se NÃO estiver no Feed) */}
             {activeTab !== DashboardTab.FEED && (
               <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
                 <button
@@ -306,7 +266,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       ? "bg-slate-100 text-rose-500"
                       : "text-slate-400 hover:text-slate-600"
                   }`}
-                  title="Visualização em Grade"
+                  title="Grade"
                 >
                   <svg
                     className="w-5 h-5"
@@ -329,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       ? "bg-slate-100 text-rose-500"
                       : "text-slate-400 hover:text-slate-600"
                   }`}
-                  title="Visualização em Lista"
+                  title="Lista"
                 >
                   <svg
                     className="w-5 h-5"
@@ -349,16 +309,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
           </div>
 
-          {/* === CONTEÚDO PRINCIPAL === */}
-
-          {/* 1. SE FOR ABA INÍCIO (FEED) */}
           {activeTab === DashboardTab.FEED && (
             <div className="animate-fade-in">
               <CommunityFeed />
             </div>
           )}
 
-          {/* 2. SE FOR ABA DE LISTAS (Assistindo, etc) */}
           {activeTab !== DashboardTab.FEED && (
             <>
               {currentList.length === 0 ? (
@@ -379,12 +335,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               ) : (
                 <>
-                  {/* Renderização Condicional: Grade ou Lista OTIMIZADA */}
                   <div
                     className={
                       viewMode === "grid"
-                        ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in" // Grid padrão (Cartaz)
-                        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in" // AQUI ESTÁ O AJUSTE: 3 por linha no PC (Lista)
+                        ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-fade-in"
+                        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in"
                     }
                   >
                     {displayedList.map((series) => (
@@ -398,8 +353,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                       />
                     ))}
                   </div>
-
-                  {/* Botão Ver Mais / Ver Menos */}
                   {currentList.length > INITIAL_LIMIT && (
                     <div className="text-center pt-4">
                       <button
@@ -450,8 +403,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           )}
         </div>
 
-        {/* Sidebar Column (Mantido igual) */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Sidebar Column - CORRIGIDO O ESPAÇAMENTO */}
+        <div className="lg:col-span-1 space-y-8">
           <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500 opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none group-hover:opacity-30 transition-opacity"></div>
             <div className="relative z-10">
@@ -496,8 +449,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               )}
             </div>
           </div>
+
           <MatchCinefilo myList={myList} />
-          {/* Atualização aqui: Passando myList para o Ranking */}
           <TrendingRanking myList={myList} />
 
           {recommendations.length > 0 && (
@@ -544,7 +497,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Bottom Recommendations (Só aparece se não estiver no Feed para não poluir) */}
       {activeTab !== DashboardTab.FEED && recommendations.length > 2 && (
         <div className="pt-10 border-t border-slate-200">
           <div className="flex items-center justify-center gap-3 mb-8">

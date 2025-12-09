@@ -1,3 +1,4 @@
+//
 import React, { useState, useRef, useEffect } from "react";
 import { UserProfile } from "../types";
 import { useNavigate } from "react-router-dom";
@@ -16,13 +17,30 @@ const THEMES: Record<string, string> = {
   minimal: "bg-slate-800",
 };
 
+// --- LISTA EXPANDIDA DE AVATARES (Vários Estilos) ---
 const AVATARS = [
+  // Estilo Micah (Clean)
   "https://api.dicebear.com/9.x/micah/svg?seed=Felix",
   "https://api.dicebear.com/9.x/micah/svg?seed=Aneka",
+  // Estilo Notionists (Preto e Branco Moderno)
   "https://api.dicebear.com/9.x/notionists/svg?seed=Callie",
   "https://api.dicebear.com/9.x/notionists/svg?seed=Bandit",
+  // Estilo Adventurer (RPG / Cartoon)
   "https://api.dicebear.com/9.x/adventurer/svg?seed=Cookie",
-  "https://api.dicebear.com/9.x/bottts/svg?seed=Gizmo",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Gizmo",
+  // Estilo Avataaars (Clássico Tech)
+  "https://api.dicebear.com/9.x/avataaars/svg?seed=Scooby",
+  "https://api.dicebear.com/9.x/avataaars/svg?seed=Velma",
+  // Estilo Lorelei (Artístico)
+  "https://api.dicebear.com/9.x/lorelei/svg?seed=Sasha",
+  "https://api.dicebear.com/9.x/lorelei/svg?seed=Willow",
+  // Estilo Open Peeps (Desenhado a Mão)
+  "https://api.dicebear.com/9.x/open-peeps/svg?seed=Buddy",
+  "https://api.dicebear.com/9.x/open-peeps/svg?seed=Granny",
+  // Estilo Pixel Art (Retro)
+  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Mario",
+  // Estilo Robôs (Fun)
+  "https://api.dicebear.com/9.x/bottts/svg?seed=C3PO",
 ];
 
 const ProfileConfig: React.FC<ProfileConfigProps> = ({
@@ -31,7 +49,6 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // Inicializa com os dados do perfil OU valores padrão seguros
   const [formData, setFormData] = useState<UserProfile>({
     name: profile?.name || "",
     bio: profile?.bio || "",
@@ -40,12 +57,17 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
   });
 
   const [customAvatar, setCustomAvatar] = useState("");
-  const [seriesSearch, setSeriesSearch] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(""); // NOVO: Estado de sucesso
+  const [saving, setSaving] = useState(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Atualiza o formulário se o perfil carregar depois (ex: refresh da página)
+  // Link dinâmico
+  const profileLink = `${
+    window.location.origin
+  }/#/profile/${formData.name.replace(/\s+/g, "")}`;
+
   useEffect(() => {
     if (profile) {
       setFormData({
@@ -59,20 +81,58 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
 
   const handleChange = (field: keyof UserProfile, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Limpa mensagens ao digitar
+    if (field === "name") {
+      setError("");
+      setSuccess("");
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
+    setSaving(true);
 
-    // Salva no Backend (Assumindo que o App.tsx passa uma função que já faz isso ou fazemos aqui)
-    // Se onUpdateProfile apenas atualizar o estado local, idealmente deveríamos chamar a API aqui também.
-    // Mas para manter a consistência com seu App.tsx atual, vamos confiar na prop.
+    try {
+      const storedUser = localStorage.getItem("userProfile");
+      const userId = storedUser ? JSON.parse(storedUser).id : null;
 
-    // DICA: O ideal seria ter o ID do usuário aqui para salvar no banco:
-    // await fetch(`http://localhost:3001/api/users/${userId}`, ...)
+      if (!userId) throw new Error("Usuário não identificado.");
 
-    onUpdateProfile(formData);
-    navigate("/");
+      const response = await fetch(
+        `http://localhost:3001/api/users/${userId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erro ao atualizar perfil.");
+      }
+
+      const updatedUserComplete = {
+        ...JSON.parse(storedUser || "{}"),
+        ...formData,
+      };
+      localStorage.setItem("userProfile", JSON.stringify(updatedUserComplete));
+
+      onUpdateProfile(formData);
+
+      // MUDANÇA: Não navega mais. Mostra sucesso.
+      setSuccess("Perfil salvo com sucesso!");
+
+      // Remove a mensagem de sucesso depois de 3 segundos (opcional)
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleFileUpload = (
@@ -82,26 +142,17 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
-
       reader.onloadend = () => {
-        if (typeof reader.result === "string") {
+        if (typeof reader.result === "string")
           handleChange(field, reader.result);
-        }
       };
-
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSeriesCoverSearch = () => {
-    if (seriesSearch.trim()) {
-      const formattedQuery = seriesSearch
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "-");
-      const simulatedCoverUrl = `https://picsum.photos/seed/${formattedQuery}-cover/1200/500`;
-      handleChange("coverTheme", simulatedCoverUrl);
-    }
+  const copyLink = () => {
+    navigator.clipboard.writeText(profileLink);
+    alert("Link copiado!");
   };
 
   const getCoverStyle = () => {
@@ -111,7 +162,7 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
   };
 
   return (
-    <div className="max-w-2xl mx-auto animate-fade-in">
+    <div className="max-w-4xl mx-auto animate-fade-in pb-12">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-slate-800">
           Personalize seu Espaço
@@ -126,9 +177,9 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
         className="bg-white rounded-3xl p-8 shadow-xl shadow-slate-200 border border-slate-100 space-y-8"
       >
         {/* Preview Section */}
-        <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 relative group">
+        <div className="bg-slate-50 rounded-3xl overflow-hidden border border-slate-100 relative group shadow-sm">
           <div
-            className={`h-32 w-full bg-cover bg-center transition-all ${
+            className={`h-48 w-full bg-cover bg-center transition-all ${
               THEMES[formData.coverTheme] ? THEMES[formData.coverTheme] : ""
             }`}
             style={
@@ -142,8 +193,8 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
             )}
           </div>
 
-          <div className="px-6 pb-6 -mt-10 relative flex items-center gap-4">
-            <div className="w-20 h-20 rounded-full p-1 bg-white shadow-lg relative z-10">
+          <div className="px-8 pb-8 -mt-16 relative flex flex-col sm:flex-row items-end gap-6">
+            <div className="w-32 h-32 rounded-full p-1.5 bg-white shadow-xl relative z-10 shrink-0">
               <img
                 src={
                   formData.avatar ||
@@ -153,37 +204,129 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
                 className="w-full h-full rounded-full bg-slate-200 object-cover"
               />
             </div>
-            <div className="pt-10">
-              <h3 className="font-bold text-slate-800 text-lg leading-tight flex items-center gap-1">
+            <div className="pb-2 w-full">
+              <h3 className="font-black text-slate-800 text-3xl leading-tight flex items-center gap-2">
                 {formData.name || "Seu Nome"}
-                <svg
-                  className="w-5 h-5 text-blue-500 fill-current"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
               </h3>
-              <p className="text-xs text-slate-500 truncate max-w-[200px]">
+              <p className="text-slate-500 font-medium truncate max-w-md">
                 {formData.bio || "Sua bio aparece aqui..."}
               </p>
             </div>
           </div>
         </div>
 
+        {/* Link Share Box */}
+        <div className="bg-rose-50 border border-rose-100 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-4 justify-between">
+          <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+            <div className="bg-white p-2 rounded-full shadow-sm text-rose-500 shrink-0">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-bold text-slate-800 text-sm">
+                Seu Link Único
+              </h4>
+              <p className="text-slate-500 text-xs truncate">{profileLink}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={copyLink}
+            className="bg-white text-rose-600 border border-rose-200 px-4 py-2 rounded-lg text-xs font-bold hover:bg-rose-50 transition-colors shadow-sm w-full sm:w-auto shrink-0"
+          >
+            Copiar
+          </button>
+        </div>
+
         {/* Basic Info */}
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">
               Seu Nome / Apelido
             </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white text-slate-800 border border-slate-200 focus:ring-2 focus:ring-rose-200 focus:border-rose-400 outline-none transition-all"
-              placeholder="Ex: Mestre das Séries"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
+                className={`w-full px-4 py-3 rounded-xl bg-slate-50 text-slate-800 border outline-none transition-all ${
+                  error
+                    ? "border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+                    : success
+                    ? "border-green-300 focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                    : "border-slate-200 focus:ring-2 focus:ring-rose-200 focus:border-rose-400"
+                }`}
+                placeholder="Ex: sopacrazy"
+              />
+              <div className="absolute right-4 top-3.5 text-slate-400">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* LÓGICA DE FEEDBACK (Erro ou Sucesso) */}
+            {error ? (
+              <p className="text-xs text-red-500 mt-2 font-bold flex items-center gap-1 animate-pulse">
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                {error}
+              </p>
+            ) : success ? (
+              <p className="text-xs text-green-500 mt-2 font-bold flex items-center gap-1 animate-pulse">
+                <svg
+                  className="w-3 h-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                {success}
+              </p>
+            ) : (
+              <p className="text-[10px] text-slate-400 mt-2 ml-1">
+                Este nome será usado no seu login e link público.
+              </p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-bold text-slate-700 mb-2">
@@ -192,8 +335,9 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
             <textarea
               value={formData.bio}
               onChange={(e) => handleChange("bio", e.target.value)}
-              className="w-full px-4 py-3 rounded-xl bg-white text-slate-800 border border-slate-200 focus:ring-2 focus:ring-rose-200 focus:border-rose-400 outline-none transition-all resize-none"
-              rows={2}
+              className="w-full px-4 py-3 rounded-xl bg-slate-50 text-slate-800 border border-slate-200 focus:ring-2 focus:ring-rose-200 focus:border-rose-400 outline-none transition-all resize-none"
+              rows={1}
+              style={{ height: "50px" }}
               placeholder="Ex: Adoro sci-fi..."
             />
           </div>
@@ -202,36 +346,36 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
         {/* Avatar Selection */}
         <div className="border-t border-slate-100 pt-6">
           <label className="block text-sm font-bold text-slate-700 mb-3">
-            Sua Foto de Perfil
+            Escolha seu Avatar
           </label>
 
-          <div className="flex flex-col sm:flex-row gap-6">
+          <div className="flex flex-col md:flex-row gap-6">
             <div className="flex-1">
-              <div className="grid grid-cols-6 gap-2">
+              <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
                 {AVATARS.map((url) => (
                   <button
                     type="button"
                     key={url}
                     onClick={() => handleChange("avatar", url)}
-                    className={`relative rounded-full aspect-square overflow-hidden border-2 transition-all hover:scale-105 ${
+                    className={`relative rounded-xl aspect-square overflow-hidden border-2 transition-all hover:scale-105 ${
                       formData.avatar === url
-                        ? "border-rose-500 ring-2 ring-rose-200"
-                        : "border-slate-100 opacity-70 hover:opacity-100"
+                        ? "border-rose-500 ring-2 ring-rose-200 shadow-md scale-105"
+                        : "border-slate-100 opacity-80 hover:opacity-100 hover:border-slate-300"
                     }`}
                   >
                     <img
                       src={url}
                       alt="Avatar option"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover bg-slate-50"
                     />
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="w-px bg-slate-100 hidden sm:block"></div>
+            <div className="w-px bg-slate-100 hidden md:block"></div>
 
-            <div className="flex-1">
+            <div className="md:w-1/3">
               <input
                 type="file"
                 accept="image/*"
@@ -242,12 +386,11 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
-                className="w-full border-2 border-dashed border-slate-200 rounded-xl p-4 text-slate-500 hover:border-rose-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex flex-col items-center justify-center gap-2 group bg-white"
+                className="w-full h-full min-h-[100px] border-2 border-dashed border-slate-200 rounded-xl p-4 text-slate-500 hover:border-rose-400 hover:text-rose-500 hover:bg-rose-50 transition-all flex flex-col items-center justify-center gap-2 group bg-slate-50"
               >
-                <span className="text-sm font-bold">Enviar Foto</span>
+                <span className="text-sm font-bold">Enviar Própria</span>
               </button>
-
-              <div className="mt-2">
+              <div className="mt-3">
                 <input
                   type="text"
                   value={customAvatar}
@@ -255,32 +398,30 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
                     setCustomAvatar(e.target.value);
                     if (e.target.value) handleChange("avatar", e.target.value);
                   }}
-                  placeholder="Cole um link..."
-                  className="w-full px-3 py-2 text-xs rounded-lg bg-white text-slate-800 border border-slate-200 focus:border-rose-300 outline-none"
+                  placeholder="Ou cole um link..."
+                  className="w-full px-3 py-2 text-xs rounded-lg bg-slate-50 text-slate-800 border border-slate-200 focus:border-rose-300 outline-none"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Cover Selection */}
+        {/* Cover Selection (Mantido Igual) */}
         <div className="border-t border-slate-100 pt-6">
           <label className="block text-sm font-bold text-slate-700 mb-3">
             Papel de Parede (Capa)
           </label>
-
           <div className="space-y-6">
-            {/* Gradients */}
-            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
               {(Object.keys(THEMES) as Array<string>).map((themeKey) => (
                 <button
                   type="button"
                   key={themeKey}
                   onClick={() => handleChange("coverTheme", themeKey)}
-                  className={`h-12 rounded-lg transition-all shadow-sm flex items-center justify-center relative overflow-hidden group ${
+                  className={`h-16 rounded-xl transition-all shadow-sm flex items-center justify-center relative overflow-hidden group ${
                     formData.coverTheme === themeKey
-                      ? "ring-2 ring-slate-800 scale-105"
-                      : "hover:scale-105"
+                      ? "ring-4 ring-slate-100 scale-105 border-2 border-slate-800"
+                      : "hover:scale-105 border border-transparent"
                   }`}
                 >
                   <div className={`absolute inset-0 ${THEMES[themeKey]}`}></div>
@@ -291,19 +432,27 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-100">
+        <div className="pt-6 flex items-center justify-end gap-3 border-t border-slate-100">
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+            className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
           >
-            Cancelar
+            Voltar
           </button>
           <button
             type="submit"
-            className="px-8 py-2.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg hover:shadow-xl transition-all active:scale-95"
+            disabled={saving || !!error}
+            className="px-8 py-3 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-lg hover:shadow-xl transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            Salvar Perfil
+            {saving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Salvando...
+              </>
+            ) : (
+              "Salvar Alterações"
+            )}
           </button>
         </div>
       </form>

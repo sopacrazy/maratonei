@@ -1,3 +1,4 @@
+//
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,7 +12,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Novo estado para mostrar/esconder senha
+  // NOVO: Estado para mostrar/esconder senha
   const [showPassword, setShowPassword] = useState(false);
 
   // Form States
@@ -28,22 +29,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       if (isRegistering) {
-        // --- LÓGICA DE REGISTRO ---
+        // --- LÓGICA DE REGISTRO COM NOVAS REGRAS ---
 
-        // 1. Valida se as senhas batem
         if (password !== confirmPassword) {
           throw new Error("As senhas não coincidem.");
         }
 
-        // 2. Valida tamanho (mínimo 6)
+        // Regra 1: Mínimo 6 caracteres
         if (password.length < 6) {
-          throw new Error("Senha muito curta (mínimo 6 caracteres).");
+          throw new Error("A senha deve ter no mínimo 6 caracteres.");
         }
 
-        // 3. Valida se tem número (Regex: \d procura digito)
+        // Regra 2: Pelo menos um número (Regex)
         const hasNumber = /\d/.test(password);
         if (!hasNumber) {
-          throw new Error("A senha precisa ter pelo menos um número.");
+          throw new Error("A senha precisa conter pelo menos um número.");
         }
 
         const response = await fetch("http://localhost:3001/api/register", {
@@ -53,13 +53,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             name,
             email,
             password,
+            // Gera um avatar baseado no nome do usuário
             avatar: `https://api.dicebear.com/9.x/micah/svg?seed=${name}`,
           }),
         });
 
         const data = await response.json();
 
-        // Pega erro de email ou nome duplicado
+        // Aqui pegamos o erro específico do backend (ex: nome duplicado)
         if (!response.ok) throw new Error(data.error || "Falha no registro");
 
         setShowSuccess(true);
@@ -95,12 +96,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setShowPassword(false); // Reseta a visualização da senha
+    setShowPassword(false); // Reseta a visualização ao trocar de aba
   };
 
   const handleCloseSuccess = () => {
     setShowSuccess(false);
-    toggleMode();
+    toggleMode(); // Vai para a tela de login
   };
 
   return (
@@ -170,17 +171,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {/* CAMPO DE SENHA COM OLHO MÁGICO */}
             <div className="relative group">
               <input
-                type={showPassword ? "text" : "password"} // Alterna o tipo
+                type={showPassword ? "text" : "password"} // Muda o tipo dinamicamente
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-4 pr-12 py-3.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:border-rose-400 focus:ring-1 focus:ring-rose-400 outline-none transition-all font-medium"
-                placeholder="Senha (min 6 caracteres + número)"
+                placeholder="Senha (min 6 letras + número)"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-3.5 text-slate-400 hover:text-rose-500 transition-colors focus:outline-none"
+                title={showPassword ? "Esconder senha" : "Mostrar senha"}
               >
                 {showPassword ? (
                   // Ícone Olho Aberto
@@ -226,7 +228,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             {isRegistering && (
               <div className="relative group">
                 <input
-                  type={showPassword ? "text" : "password"} // Segue o mesmo estado
+                  type={showPassword ? "text" : "password"} // Segue o estado do toggle
                   required={isRegistering}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
