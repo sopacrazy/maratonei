@@ -23,6 +23,7 @@ export interface UserSeries extends Series {
   addedAt: number;
   personalNote?: string;
   ranking?: number;
+  rating?: number;
 }
 
 export interface GeminiSearchResult {

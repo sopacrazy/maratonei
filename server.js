@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import db from "./db.js";
 import bcrypt from "bcrypt";
 import axios from "axios";
+import { startNewsBot } from "./services/newsBot.js";
 
 dotenv.config();
 
@@ -755,6 +756,72 @@ app.get("/api/users/search", async (req, res) => {
   }
 });
 
+// ==========================================
+//  ROTA PARA O SLIDE SHOW (LOGIN)
+// ==========================================
+
+app.get("/api/trending-backgrounds", async (req, res) => {
+  try {
+    // Busca séries em "Trending" (Tendência) da semana
+    const response = await axios.get(`${TMDB_BASE_URL}/trending/tv/week`, {
+      params: { api_key: TMDB_API_KEY, language: "pt-BR" },
+    });
+
+    // Pega as 10 primeiras e extrai apenas a URL da imagem em alta resolução
+    const images = response.data.results
+      .slice(0, 10)
+      .map((item) =>
+        item.poster_path
+          ? `https://image.tmdb.org/t/p/original${item.poster_path}`
+          : null
+      )
+      .filter(Boolean); // Remove nulos
+
+    res.json(images);
+  } catch (error) {
+    console.error("Erro ao buscar backgrounds:", error.message);
+    // Retorna array vazio em caso de erro (o front vai usar a imagem padrão)
+    res.json([]);
+  }
+});
+
+// ==========================================
+//  AVALIAÇÃO (RATING)
+// ==========================================
+
+app.patch("/api/series/:id/rating", async (req, res) => {
+  const { id } = req.params; // ID da tabela ma_user_series
+  const { userId, rating, seriesTitle, poster } = req.body;
+
+  try {
+    // 1. Salva a nota
+    await db.query("UPDATE ma_user_series SET rating = ? WHERE id = ?", [
+      rating,
+      id,
+    ]);
+
+    // 2. Se a nota for positiva, gera atividade no Feed
+    if (rating > 0) {
+      await db.query(
+        "INSERT INTO ma_activities (user_id, type, data) VALUES (?, 'RATE', ?)",
+        [
+          userId,
+          JSON.stringify({
+            title: seriesTitle,
+            poster: poster,
+            rating: rating,
+          }),
+        ]
+      );
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Erro ao avaliar:", error);
+    res.status(500).json({ error: "Erro ao salvar nota" });
+  }
+});
+
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -768,6 +835,9 @@ app.use(express.static(path.join(__dirname, "dist")));
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
+
+// Inicia o Bot de Notícias
+startNewsBot();
 
 app.listen(PORT, () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);

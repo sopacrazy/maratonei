@@ -1,11 +1,9 @@
-//
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserProfile, Series, SeriesStatus } from "../types";
 
 interface OnboardingProps {
   user: UserProfile & { id: number };
-  // Alteração aqui: permitimos que retorne uma Promise para podermos usar await
   onComplete: () => Promise<void> | void;
 }
 
@@ -28,6 +26,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Series[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<Series[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Passo 1: Atualizar Perfil
   const handleUpdateProfile = async () => {
@@ -51,17 +50,26 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
     setFormData((prev) => ({ ...prev, coverTheme: theme }));
   };
 
-  // Passo 3: Buscar Série
-  const searchSeries = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery) return;
-    setLoading(true);
+  // --- BUSCA AUTOMÁTICA (DEBOUNCE) ---
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        searchSeries(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
 
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const searchSeries = async (query: string) => {
+    setIsSearching(true);
     try {
       const res = await fetch("http://localhost:3001/api/search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: searchQuery }),
+        body: JSON.stringify({ query: query }),
       });
 
       const data = await res.json();
@@ -70,21 +78,30 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       if (Array.isArray(resultsArray)) {
         const formatted = resultsArray.map((item: any) => ({
           ...item,
+          // Garante que o ID seja string para comparação segura
           id: item.id ? item.id.toString() : `${item.title}-${item.year}`,
         }));
-        setSearchResults(formatted);
+        setSearchResults(formatted.filter((s: any) => s.poster));
       } else {
         setSearchResults([]);
       }
     } catch (error) {
       console.error("Erro na busca", error);
     } finally {
-      setLoading(false);
+      setIsSearching(false);
     }
   };
 
-  const addSeries = (series: Series) => {
-    if (!selectedSeries.find((s) => s.title === series.title)) {
+  // --- CORREÇÃO PRINCIPAL AQUI ---
+  // Verifica pelo ID. Se já existe, remove. Se não existe, adiciona.
+  const toggleSeries = (series: Series) => {
+    const exists = selectedSeries.find((s) => s.id === series.id);
+
+    if (exists) {
+      // Remove da lista (Desmarca)
+      setSelectedSeries(selectedSeries.filter((s) => s.id !== series.id));
+    } else {
+      // Adiciona à lista (Marca)
       setSelectedSeries([
         ...selectedSeries,
         { ...series, status: SeriesStatus.WATCHING },
@@ -92,7 +109,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
     }
   };
 
-  // --- FINALIZAR (A CORREÇÃO ESTÁ AQUI) ---
+  // --- FINALIZAR ---
   const handleFinish = async () => {
     setLoading(true);
 
@@ -105,6 +122,8 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       });
 
       // 2. Salva as séries escolhidas
+      // Aqui poderias mandar um array único para o backend se quisesses otimizar,
+      // mas o loop funciona bem para poucas séries.
       for (const series of selectedSeries) {
         await fetch("http://localhost:3001/api/series", {
           method: "POST",
@@ -116,10 +135,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
         });
       }
 
-      // 3. ATUALIZA O APP E ESPERA TERMINAR ANTES DE NAVEGAR
+      // 3. ATUALIZA O APP
       await onComplete();
 
-      // 4. Agora sim, vai pra Home
+      // 4. Vai pra Home
       navigate("/");
     } catch (error) {
       console.error("Erro ao finalizar", error);
@@ -153,7 +172,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
         ))}
       </div>
 
-      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-xl p-8 animate-fade-in">
+      <div className="bg-white w-full max-w-2xl rounded-3xl shadow-xl p-6 sm:p-8 animate-fade-in">
         {/* PASSO 1: PERFIL */}
         {step === 1 && (
           <div className="space-y-6 text-center">
@@ -266,7 +285,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                 Para começar...
               </h2>
               <p className="text-slate-500">
-                Adicione pelo menos 3 séries que você ama ou está vendo.
+                Adicione pelo menos 3 séries que você ama.
               </p>
               <div
                 className={`mt-2 font-bold text-lg ${
@@ -275,123 +294,91 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
                     : "text-rose-500"
                 }`}
               >
-                {selectedSeries.length} / 3 Adicionadas
+                {selectedSeries.length} / 3 Selecionadas
               </div>
             </div>
 
-            <form onSubmit={searchSeries} className="flex gap-2">
+            <div className="relative">
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar série (ex: The Last of Us)..."
-                className="flex-1 p-3 border border-slate-200 rounded-xl outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-200 transition-all"
+                placeholder="Digite o nome da série..."
+                className="w-full p-4 pl-12 border border-slate-200 rounded-2xl outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-100 transition-all text-lg"
               />
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-rose-500 text-white px-6 rounded-xl font-bold hover:bg-rose-600 transition-colors shadow-md active:scale-95 disabled:opacity-50"
-              >
-                {loading ? "..." : "Buscar"}
-              </button>
-            </form>
-
-            {/* Resultados da Busca */}
-            <div className="grid grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar">
-              {searchResults.map((s) => (
-                <div
-                  key={s.id}
-                  onClick={() => addSeries(s)}
-                  className="p-2 border rounded-lg cursor-pointer hover:bg-slate-50 flex items-center gap-2 group transition-colors"
-                >
-                  {/* IMAGEM DA CAPA (POSTER) */}
-                  <div className="w-10 h-14 bg-slate-200 rounded shrink-0 overflow-hidden relative">
-                    {s.poster ? (
-                      <img
-                        src={s.poster}
-                        alt={s.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[8px] text-slate-500 font-bold bg-slate-100 text-center p-1">
-                        SEM FOTO
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold truncate text-slate-800">
-                      {s.title}
-                    </div>
-                    <div className="text-[10px] text-slate-400">{s.year}</div>
-                  </div>
-                  <span className="ml-auto text-green-500 font-bold bg-green-50 p-1 rounded-md shadow-sm">
-                    +
-                  </span>
-                </div>
-              ))}
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl">
+                🔍
+              </span>
+              {isSearching && (
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 animate-pulse font-bold">
+                  Buscando...
+                </span>
+              )}
             </div>
 
-            {/* Lista Selecionada */}
-            {selectedSeries.length > 0 && (
-              <div className="border-t border-slate-100 pt-4 animate-fade-in">
-                <h4 className="font-bold text-sm mb-2 text-slate-600">
-                  Sua seleção:
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {selectedSeries.map((s) => (
-                    <span
-                      key={s.id}
-                      className="bg-slate-800 text-white px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm animate-fade-in"
-                    >
-                      {s.title}
-                      <button
-                        onClick={() =>
-                          setSelectedSeries((prev) =>
-                            prev.filter((i) => i.id !== s.id)
-                          )
-                        }
-                        className="text-slate-400 hover:text-white transition-colors"
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Grid de Resultados */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto custom-scrollbar p-1">
+              {searchResults.length === 0 &&
+                searchQuery.length > 2 &&
+                !isSearching && (
+                  <div className="col-span-full text-center py-8 text-slate-400">
+                    Nada encontrado. Tente outro nome.
+                  </div>
+                )}
+
+              {searchResults.map((s) => {
+                // CORREÇÃO: Verifica se JÁ EXISTE pelo ID
+                const isSelected = selectedSeries.some(
+                  (item) => item.id === s.id
+                );
+
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => toggleSeries(s)}
+                    className={`relative group cursor-pointer rounded-xl overflow-hidden shadow-sm transition-all duration-200 ${
+                      isSelected
+                        ? "ring-4 ring-rose-500 scale-95"
+                        : "hover:scale-105 hover:shadow-lg"
+                    }`}
+                  >
+                    <div className="aspect-[2/3] w-full bg-slate-200 relative">
+                      {s.poster ? (
+                        <img
+                          src={s.poster}
+                          alt={s.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-xs text-slate-400 font-bold">
+                          Sem Capa
+                        </div>
+                      )}
+
+                      {/* Overlay de Seleção */}
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-rose-500/60 flex items-center justify-center backdrop-blur-[2px]">
+                          <span className="text-white font-bold text-3xl shadow-sm">
+                            ✓
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent pt-6">
+                      <p className="text-white text-xs font-bold truncate text-center">
+                        {s.title}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             <button
               onClick={handleFinish}
               disabled={selectedSeries.length < 3 || loading}
               className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl disabled:opacity-50 disabled:bg-slate-300 transition-all text-lg shadow-lg shadow-green-500/20 mt-4 active:scale-95 flex items-center justify-center gap-2"
             >
-              {loading ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Finalizando...
-                </>
-              ) : (
-                "Finalizar e Entrar! 🚀"
-              )}
+              {loading ? "Finalizando..." : "Finalizar e Entrar! 🚀"}
             </button>
           </div>
         )}

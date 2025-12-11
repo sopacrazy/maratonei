@@ -1,4 +1,3 @@
-//
 import React, { useState, useEffect, useMemo } from "react";
 import { UserSeries, SeriesStatus, UserProfile } from "../types";
 import StatusBadge from "../components/StatusBadge";
@@ -102,18 +101,17 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   const [loading, setLoading] = useState(!!userId);
   const [localSearch, setLocalSearch] = useState("");
 
-  // Estados para Seguir
   const [isFollowing, setIsFollowing] = useState(false);
   const [targetId, setTargetId] = useState<number | null>(null);
 
-  // Estados para Modal de Seleção de Top 3
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
   const [selectedRankSlot, setSelectedRankSlot] = useState<number | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState("");
 
   const myDataStr = localStorage.getItem("userProfile");
   const myId = myDataStr ? JSON.parse(myDataStr).id : null;
 
-  // Lógica para recarregar a página (forçar atualização visual do Ranking)
   const refreshPage = () => {
     window.location.reload();
   };
@@ -167,7 +165,6 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
     }
   };
 
-  // --- Lógica do Modal de Ranking ---
   const openRankingModal = (rank: number) => {
     setSelectedRankSlot(rank);
     setIsSelectionModalOpen(true);
@@ -175,16 +172,14 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
 
   const handleSelectSeriesForRank = async (seriesId: string) => {
     if (!selectedRankSlot || !myId) return;
-
     try {
       await fetch(`http://localhost:3001/api/series/${seriesId}/rank`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: myId, rank: selectedRankSlot }),
       });
-
       setIsSelectionModalOpen(false);
-      refreshPage(); // Recarrega para mostrar a mudança
+      refreshPage();
     } catch (error) {
       console.error("Erro ao atualizar ranking:", error);
     }
@@ -192,6 +187,50 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
 
   const currentProfile = isOwner ? userProfile : fetchedData?.profile;
   const currentList = isOwner ? myList : fetchedData?.list || [];
+
+  // Lógica para verificar se é oficial (ajuste o ID ou Nome conforme sua preferência)
+  const isOfficial =
+    currentProfile?.id === 16 || currentProfile?.name === "Maratonei";
+
+  // --- LÓGICA DE PARTILHA ---
+  const getShareUrl = () => {
+    if (userId) return window.location.href;
+    const baseUrl = window.location.origin;
+    const safeIdentifier = currentProfile?.name
+      ? currentProfile.name.toLowerCase().replace(/\s+/g, "")
+      : currentProfile?.id;
+    return `${baseUrl}/#/profile/${safeIdentifier}`;
+  };
+
+  const shareLink = getShareUrl();
+  const shareMessage = `Vem ver minhas séries favoritas e o que estou assistindo no Maratonei! 🍿🎬`;
+  const encodedShareLink = encodeURIComponent(shareLink);
+  const encodedShareText = encodeURIComponent(shareMessage);
+
+  const handleShareClick = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Perfil de ${currentProfile?.name}`,
+          text: shareMessage,
+          url: shareLink,
+        });
+      } catch (err) {
+        setIsShareModalOpen(true);
+      }
+    } else {
+      setIsShareModalOpen(true);
+    }
+  };
+
+  const copyLink = (platform: string) => {
+    navigator.clipboard.writeText(shareLink);
+    setCopySuccess(`Link copiado! Cole no ${platform}`);
+    setTimeout(() => setCopySuccess(""), 3000);
+  };
+
+  const whatsappLink = `https://wa.me/?text=${encodedShareText}%20${encodedShareLink}`;
+  const messengerLink = `fb-messenger://share/?link=${encodedShareLink}`;
 
   const filteredList = useMemo(() => {
     if (!localSearch.trim()) return currentList;
@@ -254,9 +293,10 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         </div>
 
         <div className="max-w-4xl mx-auto px-4 relative">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end -mt-12 sm:-mt-16 mb-6 gap-4">
-            <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full p-1 bg-white shadow-xl">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start mb-6 gap-6">
+            {/* AVATAR: Sobe sozinho com margem negativa */}
+            <div className="relative -mt-16 sm:-mt-20 shrink-0 z-10">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full p-1.5 bg-white shadow-xl">
                 <img
                   src={currentProfile.avatar}
                   alt={currentProfile.name}
@@ -265,58 +305,94 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
               </div>
             </div>
 
-            <div className="flex-1 text-center sm:text-left pt-2 sm:pt-0 sm:pb-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-800 leading-tight">
-                {currentProfile.name}
-              </h1>
-              {!isOwner && (
+            {/* INFO DO USUÁRIO: Fica no fluxo normal (fundo branco) */}
+            <div className="flex-1 text-center sm:text-left pt-2 sm:pt-4">
+              {/* --- MUDANÇA: BOTÕES DE AÇÃO AGORA EM PRIMEIRO LUGAR --- */}
+              <div className="flex items-center justify-center sm:justify-start gap-2 mb-3">
+                {!isOwner && (
+                  <button
+                    onClick={handleFollowToggle}
+                    className={`px-6 py-2 rounded-full text-sm font-bold transition-all shadow-sm ${
+                      isFollowing
+                        ? "bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 border border-slate-200"
+                        : "bg-rose-500 text-white hover:bg-rose-600 hover:scale-105"
+                    }`}
+                  >
+                    {isFollowing ? "Seguindo" : "Seguir"}
+                  </button>
+                )}
+
                 <button
-                  onClick={handleFollowToggle}
-                  className={`mt-2 px-6 py-1.5 rounded-full text-sm font-bold transition-all shadow-sm ${
-                    isFollowing
-                      ? "bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 border border-slate-200"
-                      : "bg-rose-500 text-white hover:bg-rose-600 hover:scale-105"
-                  }`}
+                  onClick={handleShareClick}
+                  className="px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm flex items-center gap-2 text-sm font-bold active:scale-95"
+                  title="Compartilhar Perfil"
                 >
-                  {isFollowing ? "Seguindo" : "Seguir"}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" />
+                  </svg>
+                  Compartilhar
                 </button>
-              )}
-              <p className="text-slate-500 font-medium text-sm mt-3 max-w-md">
+              </div>
+
+              {/* --- NOME COM SELO OFICIAL (ABAIXO DOS BOTÕES) --- */}
+              <div className="flex items-center justify-center sm:justify-start gap-2">
+                <h1 className="text-2xl sm:text-4xl font-black text-slate-800 leading-tight">
+                  {currentProfile.name}
+                </h1>
+                {isOfficial && (
+                  <img
+                    src="/selo1.png"
+                    alt="Oficial"
+                    className="w-8 h-8 sm:w-12 sm:h-12 animate-pulse"
+                    title="Perfil Oficial Maratonei"
+                  />
+                )}
+              </div>
+
+              {/* BIO */}
+              <p className="text-slate-500 font-medium text-sm mt-3 max-w-md mx-auto sm:mx-0 leading-relaxed">
                 {currentProfile.bio || "Sem bio."}
               </p>
-            </div>
 
-            <div className="flex gap-6 text-center sm:pb-3">
-              <div>
-                <div className="font-black text-xl text-slate-800">
-                  {currentProfile.followersCount || 0}
+              {/* STATUS ESTATÍSTICAS */}
+              <div className="flex justify-center sm:justify-start gap-6 mt-6">
+                <div className="text-center sm:text-left">
+                  <div className="font-black text-xl text-slate-800">
+                    {currentProfile.followersCount || 0}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">
+                    Seguidores
+                  </div>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">
-                  Seguidores
+                <div className="text-center sm:text-left">
+                  <div className="font-black text-xl text-slate-800">
+                    {currentProfile.followingCount || 0}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">
+                    Seguindo
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="font-black text-xl text-slate-800">
-                  {currentProfile.followingCount || 0}
+                <div className="text-center sm:text-left">
+                  <div className="font-black text-xl text-slate-800">
+                    {watchingNow.length}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">
+                    Assistindo
+                  </div>
                 </div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">
-                  Seguindo
-                </div>
-              </div>
-              <div>
-                <div className="font-black text-xl text-slate-800">
-                  {watchingNow.length}
-                </div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">
-                  Assistindo
-                </div>
-              </div>
-              <div>
-                <div className="font-black text-xl text-slate-800">
-                  {watchedAll.length}
-                </div>
-                <div className="text-[10px] font-bold text-slate-400 uppercase">
-                  Vistos
+                <div className="text-center sm:text-left">
+                  <div className="font-black text-xl text-slate-800">
+                    {watchedAll.length}
+                  </div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">
+                    Vistos
+                  </div>
                 </div>
               </div>
             </div>
@@ -333,7 +409,6 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
             </span>
             <h2 className="text-xl font-black text-slate-800">Top Favoritos</h2>
           </div>
-          {/* AQUI ESTAVA O PROBLEMA: Faltava passar a função openRankingModal */}
           <TopPodium
             seriesList={currentList}
             onSlotClick={openRankingModal}
@@ -382,7 +457,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         </div>
       </div>
 
-      {/* MODAL DE SELEÇÃO DE SÉRIE PARA O TOP 3 */}
+      {/* MODAL DE RANKING */}
       {isSelectionModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
@@ -418,6 +493,137 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE COMPARTILHAMENTO */}
+      {isShareModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div
+            className="absolute inset-0"
+            onClick={() => setIsShareModalOpen(false)}
+          ></div>
+
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative z-10 animate-fade-in-up">
+            <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-bold text-slate-800">
+                Compartilhar Perfil
+              </h3>
+              <button
+                onClick={() => setIsShareModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-2"
+              >
+                ✕
+              </button>
+            </div>
+
+            {copySuccess && (
+              <div className="mb-4 bg-green-100 text-green-700 px-4 py-2 rounded-xl text-sm font-bold text-center animate-fade-in">
+                {copySuccess}
+              </div>
+            )}
+
+            <div className="bg-slate-50 p-3 rounded-xl mb-4 text-xs text-slate-500 break-all border border-slate-100 text-center">
+              {shareLink}
+            </div>
+
+            <div className="space-y-3">
+              {/* WhatsApp */}
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 w-full p-4 rounded-2xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366]/20 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#25D366] text-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="block font-bold">WhatsApp</span>
+                  <span className="text-xs opacity-70">Enviar mensagem</span>
+                </div>
+              </a>
+
+              {/* Messenger */}
+              <a
+                href={messengerLink}
+                className="flex items-center gap-4 w-full p-4 rounded-2xl bg-[#0084FF]/10 text-[#0084FF] hover:bg-[#0084FF]/20 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#0084FF] text-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M0 7.76C0 3.301 3.493 0 8 0s8 3.301 8 7.76-3.493 7.76-8 7.76c-.81 0-1.586-.107-2.316-.307a.639.639 0 0 0-.427.03l-1.588.702a.64.64 0 0 1-.898-.566l-.044-1.423a.639.639 0 0 0-.215-.456C.956 12.108 0 10.092 0 7.76zm5.546-1.459-2.35 3.728c-.225.358.214.761.551.506l2.525-1.916a.48.48 0 0 1 .578-.002l1.869 1.402a1.2 1.2 0 0 0 1.735-.32l2.35-3.728c.226-.358-.214-.761-.551-.506L9.728 7.381a.48.48 0 0 1-.578.002L7.281 5.98a1.2 1.2 0 0 0-1.735.32z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="block font-bold">Messenger</span>
+                  <span className="text-xs opacity-70">Abrir app</span>
+                </div>
+              </a>
+
+              {/* Instagram (Copy Link) */}
+              <button
+                onClick={() => copyLink("Instagram")}
+                className="flex items-center gap-4 w-full p-4 rounded-2xl bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-yellow-400 via-rose-500 to-purple-600 text-white flex items-center justify-center text-xl shadow-sm group-hover:scale-110 transition-transform">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M8 0C5.829 0 5.556.01 4.703.048 3.85.088 3.269.222 2.76.42a3.917 3.917 0 0 0-1.417.923A3.927 3.927 0 0 0 .42 2.76C.222 3.268.087 3.85.048 4.7.01 5.555 0 5.827 0 8.001c0 2.172.01 2.444.048 3.297.04.852.174 1.433.372 1.942.205.526.478.972.923 1.417.444.445.89.719 1.416.923.51.198 1.09.333 1.942.372C5.555 15.99 5.827 16 8 16s2.444-.01 3.298-.048c.851-.04 1.434-.174 1.943-.372a3.916 3.916 0 0 0 1.416-.923c.445-.445.718-.891.923-1.417.197-.509.332-1.09.372-1.942C15.99 10.445 16 10.173 16 8s-.01-2.445-.048-3.299c-.04-.851-.175-1.433-.372-1.941a3.926 3.926 0 0 0-.923-1.417A3.911 3.911 0 0 0 13.24.42c-.51-.198-1.092-.333-1.943-.372C10.443.01 10.172 0 7.998 0h.003zm-.717 1.442h.718c2.136 0 2.389.007 3.232.046.78.035 1.204.166 1.486.275.373.145.64.319.92.599.28.28.453.546.598.92.11.281.24.705.275 1.485.039.843.047 1.096.047 3.231s-.008 2.389-.047 3.232c-.035.78-.166 1.203-.275 1.485a2.47 2.47 0 0 1-.599.919c-.28.28-.546.453-.92.598-.28.11-.704.24-1.485.276-.843.038-1.096.047-3.232.047s-2.39-.009-3.232-.047c-.78-.036-1.203-.166-1.485-.276a2.478 2.478 0 0 1-.92-.598 2.48 2.48 0 0 1-.6-.92c-.109-.281-.24-.705-.275-1.485-.038-.843-.046-1.096-.046-3.233 0-2.136.008-2.388.046-3.231.036-.78.166-1.204.276-1.486.145-.373.319-.64.599-.92.28-.28.546-.453.92-.598.282-.11.705-.24 1.485-.276.738-.034 1.024-.044 2.515-.045v.002zm4.988 1.328a.96.96 0 1 0 0 1.92.96.96 0 0 0 0-1.92zm-4.27 1.122a4.109 4.109 0 1 0 0 8.217 4.109 4.109 0 0 0 0-8.217zm0 1.441a2.667 2.667 0 1 1 0 5.334 2.667 2.667 0 0 1 0-5.334z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="block font-bold">Instagram</span>
+                  <span className="text-xs opacity-70">
+                    Copiar link para Stories
+                  </span>
+                </div>
+              </button>
+
+              {/* Copiar Link Genérico */}
+              <button
+                onClick={() => copyLink("Area de Transferência")}
+                className="flex items-center gap-4 w-full p-4 rounded-2xl bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-xl shadow-sm group-hover:bg-slate-300 transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                    viewBox="0 0 16 16"
+                  >
+                    <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z" />
+                    <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <span className="block font-bold">Copiar Link</span>
+                  <span className="text-xs opacity-70">Para outras redes</span>
+                </div>
+              </button>
             </div>
           </div>
         </div>

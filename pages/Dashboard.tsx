@@ -40,6 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isExpanded, setIsExpanded] = useState(false);
 
+  // --- Lógica de Listas Filtradas ---
   const watchingList = useMemo(
     () => myList.filter((s) => s.status === SeriesStatus.WATCHING),
     [myList]
@@ -70,6 +71,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsExpanded(false);
   }, [activeTab]);
 
+  // --- Estatísticas de Tempo ---
   const timeStats = useMemo(() => {
     const totalMinutes = watchedList.reduce((acc, series) => {
       const eps = series.totalEpisodes || 10;
@@ -82,6 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return { months, days, hours, totalMinutes };
   }, [watchedList]);
 
+  // --- Buscar Recomendações ---
   useEffect(() => {
     const fetchRecs = async () => {
       setLoadingRecs(true);
@@ -112,6 +115,42 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
     if (recommendations.length === 0) fetchRecs();
   }, [myList]);
+
+  // --- FUNÇÃO DE AVALIAÇÃO (RATING) ---
+  const handleRate = async (seriesId: string, rating: number) => {
+    // 1. Atualização Otimista (Visual Imediato)
+    // Precisamos atualizar o myList no App.tsx via prop ou forçar reload,
+    // mas como o myList vem de prop, o ideal seria ter uma função onUpdateRating.
+    // Como simplificação, atualizamos apenas visualmente se tivermos acesso ao setMyList localmente
+    // ou disparamos o request e confiamos que o user vai ver na proxima carga.
+
+    // NOTA: Para refletir imediatamente, o ideal era o onUpdateStatus ou uma nova prop lidar com isso.
+    // Mas vamos focar na persistência:
+
+    const series = myList.find((s) => s.id === seriesId);
+    if (!series) return;
+
+    const userStr = localStorage.getItem("userProfile");
+    const uid = userStr ? JSON.parse(userStr).id : null;
+
+    if (uid) {
+      try {
+        await fetch(`http://localhost:3001/api/series/${seriesId}/rating`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: uid,
+            rating: rating,
+            seriesTitle: series.title,
+            poster: series.poster,
+          }),
+        });
+        console.log("Avaliação salva!");
+      } catch (error) {
+        console.error("Erro ao avaliar", error);
+      }
+    }
+  };
 
   const isCustomImage = useMemo(() => {
     const theme = userProfile.coverTheme || "sunset";
@@ -349,6 +388,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         onUpdateStatus={onUpdateStatus}
                         onRemove={onRemove}
                         onUpdateNote={onUpdateNote}
+                        onRate={handleRate} // <--- Passando a função de avaliação aqui
                         viewMode={viewMode}
                       />
                     ))}
@@ -403,7 +443,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           )}
         </div>
 
-        {/* Sidebar Column - CORRIGIDO O ESPAÇAMENTO */}
+        {/* Sidebar Column */}
         <div className="lg:col-span-1 space-y-8">
           <div className="bg-slate-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500 opacity-20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none group-hover:opacity-30 transition-opacity"></div>
@@ -452,48 +492,6 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <MatchCinefilo myList={myList} />
           <TrendingRanking myList={myList} />
-
-          {recommendations.length > 0 && (
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4"></div>
-              <h3 className="font-bold text-lg mb-4 relative z-10 flex items-center gap-2">
-                🔥 Em Alta na Rede
-              </h3>
-              <div className="space-y-4 relative z-10">
-                {recommendations.slice(0, 2).map((rec) => (
-                  <div
-                    key={rec.id}
-                    className="bg-white/10 backdrop-blur-sm p-3 rounded-xl border border-white/20 flex gap-3"
-                  >
-                    <div className="w-10 h-14 bg-black/20 rounded-lg shrink-0 overflow-hidden relative">
-                      {rec.poster ? (
-                        <img
-                          src={rec.poster}
-                          className="w-full h-full object-cover"
-                          alt={rec.title}
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-slate-700"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-sm truncate">
-                        {rec.title}
-                      </h4>
-                      <button
-                        onClick={() =>
-                          onUpdateStatus(rec, SeriesStatus.WANT_TO_WATCH)
-                        }
-                        className="mt-2 text-[10px] bg-white text-indigo-600 px-2 py-1 rounded font-bold hover:bg-indigo-50"
-                      >
-                        + Adicionar
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

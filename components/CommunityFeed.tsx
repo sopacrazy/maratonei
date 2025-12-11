@@ -64,6 +64,9 @@ const ActivityItem: React.FC<{
   });
   const isMyPost = currentUser && act.user_id === currentUser.id;
 
+  // Lógica para verificar se é o perfil oficial
+  const isOfficial = act.user_id === 16 || act.user_name === "Maratonei";
+
   const handleLike = async () => {
     if (!currentUser) return;
     const newLiked = !liked;
@@ -212,12 +215,24 @@ const ActivityItem: React.FC<{
           />
         </div>
         <div className="flex-1 min-w-0">
-          <span
-            onClick={() => goToProfile(act.user_name)}
-            className="font-bold text-sm text-slate-800 cursor-pointer hover:underline"
-          >
-            {act.user_name}
-          </span>
+          {/* MUDANÇA AQUI: Wrapper Flex para o Nome + Selo */}
+          <div className="flex items-center gap-1">
+            <span
+              onClick={() => goToProfile(act.user_name)}
+              className="font-bold text-sm text-slate-800 cursor-pointer hover:underline"
+            >
+              {act.user_name}
+            </span>
+            {isOfficial && (
+              <img
+                src="/selo1.png"
+                alt="Oficial"
+                // MUDANÇA AQUI: Aumentei para w-12 (mobile) e w-16 (desktop)
+                className="w-7 h-7 sm:w-6 sm:h-6 animate-pulse"
+                title="Perfil Oficial Maratonei"
+              />
+            )}
+          </div>
           <p className="text-[10px] text-slate-400 mt-0.5">{time}</p>
         </div>
         {isMyPost && (
@@ -345,10 +360,10 @@ const ActivityItem: React.FC<{
 const CommunityFeed: React.FC = () => {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [activeTab, setActiveTab] = useState<"global" | "personal">("global");
-
-  // PAGINAÇÃO E CARGA
-  const [visibleLimit, setVisibleLimit] = useState(5); // Começa mostrando 5
+  const [activeTab, setActiveTab] = useState<
+    "global" | "personal" | "following"
+  >("following");
+  const [visibleLimit, setVisibleLimit] = useState(5);
 
   const [newPost, setNewPost] = useState("");
   const [isSpoiler, setIsSpoiler] = useState(false);
@@ -383,7 +398,6 @@ const CommunityFeed: React.FC = () => {
     loadFeed();
   }, [activeTab]);
 
-  // Função para carregar mais posts
   const handleLoadMore = () => {
     setVisibleLimit((prev) => prev + 5);
   };
@@ -472,24 +486,34 @@ const CommunityFeed: React.FC = () => {
 
         <div className="flex bg-slate-200 p-1 rounded-lg">
           <button
+            onClick={() => setActiveTab("following")}
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
+              activeTab === "following"
+                ? "bg-white text-slate-800 shadow-sm"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Seguindo
+          </button>
+          <button
             onClick={() => setActiveTab("global")}
-            className={`px-6 py-1.5 text-xs font-bold rounded-md transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
               activeTab === "global"
                 ? "bg-white text-slate-800 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Comunidade
+            Explorar
           </button>
           <button
             onClick={() => setActiveTab("personal")}
-            className={`px-6 py-1.5 text-xs font-bold rounded-md transition-all ${
+            className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all ${
               activeTab === "personal"
                 ? "bg-white text-rose-500 shadow-sm"
                 : "text-slate-500 hover:text-slate-700"
             }`}
           >
-            Meus Posts
+            Eu
           </button>
         </div>
       </div>
@@ -581,10 +605,17 @@ const CommunityFeed: React.FC = () => {
       <div className="space-y-4">
         {activities.length === 0 ? (
           <div className="text-center py-12 text-slate-400 text-sm bg-white rounded-3xl border border-slate-100 border-dashed">
-            <p>Nenhuma atividade encontrada.</p>
+            {activeTab === "following" ? (
+              <p>
+                Você ainda não segue ninguém ou ninguém postou nada.
+                <br />
+                Tente a aba "Explorar"!
+              </p>
+            ) : (
+              <p>Nenhuma atividade encontrada.</p>
+            )}
           </div>
         ) : (
-          // Exibe apenas a quantidade definida por visibleLimit
           activities
             .slice(0, visibleLimit)
             .map((act) => (
@@ -600,7 +631,6 @@ const CommunityFeed: React.FC = () => {
             ))
         )}
 
-        {/* BOTÃO MOSTRAR MAIS */}
         {activities.length > visibleLimit && (
           <div className="text-center pt-4 pb-8">
             <button
