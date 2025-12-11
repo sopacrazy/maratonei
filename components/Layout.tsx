@@ -30,6 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
       : "text-slate-500 hover:text-rose-500 hover:bg-slate-50";
   };
 
+<<<<<<< HEAD
   // --- LISTA DE LINKS DE NAVEGAÇÃO ATUALIZADA ---
   const navLinks = [
     { path: "/", label: "Minhas Séries" },
@@ -37,11 +38,21 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
     { path: "/search", label: "Buscar" },
   ];
   // --- FIM DA LISTA DE LINKS ---
+=======
+  const navLinks = [
+    { path: "/", label: "Minhas Séries" },
+    { path: "/search", label: "Buscar" },
+  ];
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 
   // --- BUSCA NOTIFICAÇÕES ---
   const fetchNotifications = () => {
     if (!userId) return;
+<<<<<<< HEAD
     fetch(`http://72.61.57.51:3001/api/notifications/${userId}`)
+=======
+    fetch(`http://localhost:3001/api/notifications/${userId}`)
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setNotifications(data);
@@ -89,7 +100,11 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
       notifications
         .filter((n) => !n.is_read)
         .forEach((n) => {
+<<<<<<< HEAD
           fetch(`http://72.61.57.51:3001/api/notifications/${n.id}/read`, {
+=======
+          fetch(`http://localhost:3001/api/notifications/${n.id}/read`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             method: "PATCH",
           });
         });
@@ -102,7 +117,11 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
 
     // Garante leitura
     if (!notif.is_read) {
+<<<<<<< HEAD
       fetch(`http://72.61.57.51:3001/api/notifications/${notif.id}/read`, {
+=======
+      fetch(`http://localhost:3001/api/notifications/${notif.id}/read`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "PATCH",
       });
     }
@@ -122,7 +141,11 @@ const Layout: React.FC<LayoutProps> = ({ children, onLogout }) => {
     if (!userId) return;
     setNotifications([]); // Limpa visual
     try {
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/notifications/clear/${userId}`, {
+=======
+      await fetch(`http://localhost:3001/api/notifications/clear/${userId}`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "DELETE",
       });
     } catch (error) {

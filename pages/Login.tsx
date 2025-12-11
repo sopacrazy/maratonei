@@ -25,7 +25,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const fetchBackgrounds = async () => {
       try {
         const response = await fetch(
+<<<<<<< HEAD
           "http://72.61.57.51:3001/api/trending-backgrounds"
+=======
+          "http://localhost:3001/api/trending-backgrounds"
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         );
         const data = await response.json();
 
@@ -33,13 +37,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           setBackgrounds(data);
         } else {
           setBackgrounds([
+<<<<<<< HEAD
             "http://images.unsplash.com/photo-1574375927938-d5a98e8efe85?q=80&w=1000&auto=format&fit=crop",
+=======
+            "https://images.unsplash.com/photo-1574375927938-d5a98e8efe85?q=80&w=1000&auto=format&fit=crop",
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           ]);
         }
       } catch (error) {
         console.error("Erro ao carregar backgrounds:", error);
         setBackgrounds([
+<<<<<<< HEAD
           "http://images.unsplash.com/photo-1574375927938-d5a98e8efe85?q=80&w=1000&auto=format&fit=crop",
+=======
+          "https://images.unsplash.com/photo-1574375927938-d5a98e8efe85?q=80&w=1000&auto=format&fit=crop",
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         ]);
       }
     };
@@ -68,14 +80,22 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         if (!/\d/.test(password))
           throw new Error("A senha precisa conter pelo menos um número.");
 
+<<<<<<< HEAD
         const response = await fetch("http://72.61.57.51:3001/api/register", {
+=======
+        const response = await fetch("http://localhost:3001/api/register", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name,
             email,
             password,
+<<<<<<< HEAD
             avatar: `http://api.dicebear.com/9.x/micah/svg?seed=${name}`,
+=======
+            avatar: `https://api.dicebear.com/9.x/micah/svg?seed=${name}`,
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           }),
         });
 
@@ -83,7 +103,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         if (!response.ok) throw new Error(data.error || "Falha no registro");
         setShowSuccess(true);
       } else {
+<<<<<<< HEAD
         const response = await fetch("http://72.61.57.51:3001/api/login", {
+=======
+        const response = await fetch("http://localhost:3001/api/login", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
@@ -122,7 +146,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <>
       {/* Importando a Fonte Inter diretamente */}
       <style>
+<<<<<<< HEAD
         {`@import url('http://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');`}
+=======
+        {`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');`}
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       </style>
 
       <div

@@ -9,6 +9,7 @@ import { startNewsBot } from "./services/newsBot.js";
 
 dotenv.config();
 
+<<<<<<< HEAD
 // ==========================================
 //  LÓGICA DE SELOS (BADGES)
 // ==========================================
@@ -57,6 +58,12 @@ const app = express();
 const PORT = 3001;
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "http://api.themoviedb.org/3";
+=======
+const app = express();
+const PORT = 3001;
+const TMDB_API_KEY = process.env.TMDB_API_KEY;
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 
 app.use(cors());
 app.use(express.json());
@@ -138,6 +145,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // ==========================================
+<<<<<<< HEAD
 //  POSTS (MODIFICADO)
 // ==========================================
 
@@ -194,6 +202,11 @@ app.get("/api/users/:userId/badges", async (req, res) => {
   }
 });
 
+=======
+//  PERFIL & USUÁRIOS
+// ==========================================
+
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 app.get("/api/users/:identifier/full", async (req, res) => {
   const { identifier } = req.params;
 
@@ -649,7 +662,11 @@ app.post("/api/search", async (req, res) => {
       totalEpisodes: 10,
       avgEpisodeDuration: 45,
       poster: item.poster_path
+<<<<<<< HEAD
         ? `http://image.tmdb.org/t/p/w500${item.poster_path}`
+=======
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         : null,
       id: item.id.toString(),
     }));
@@ -675,7 +692,11 @@ app.post("/api/recommendations", async (req, res) => {
       synopsis: item.overview,
       genres: ["Popular"],
       poster: item.poster_path
+<<<<<<< HEAD
         ? `http://image.tmdb.org/t/p/w500${item.poster_path}`
+=======
+        ? `https://image.tmdb.org/t/p/w500${item.poster_path}`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         : null,
       id: item.id.toString(),
     }));
@@ -869,7 +890,11 @@ app.get("/api/trending-backgrounds", async (req, res) => {
       .slice(0, 10)
       .map((item) =>
         item.poster_path
+<<<<<<< HEAD
           ? `http://image.tmdb.org/t/p/original${item.poster_path}`
+=======
+          ? `https://image.tmdb.org/t/p/original${item.poster_path}`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           : null
       )
       .filter(Boolean); // Remove nulos
@@ -937,5 +962,9 @@ app.use((req, res) => {
 startNewsBot();
 
 app.listen(PORT, () => {
+<<<<<<< HEAD
   console.log(`✅ Servidor rodando em http://72.61.57.51:${PORT}`);
+=======
+  console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 });

@@ -34,7 +34,11 @@ const Search: React.FC<SearchProps> = ({ myList, onAdd }) => {
 
     try {
       if (searchType === "series") {
+<<<<<<< HEAD
         const response = await fetch("http://72.61.57.51:3001/api/search", {
+=======
+        const response = await fetch("http://localhost:3001/api/search", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: searchTerm, page: pageNumber }),
@@ -49,7 +53,11 @@ const Search: React.FC<SearchProps> = ({ myList, onAdd }) => {
         setTotalPages(data.total_pages || 0);
       } else {
         const response = await fetch(
+<<<<<<< HEAD
           `http://72.61.57.51:3001/api/users/search?query=${encodeURIComponent(
+=======
+          `http://localhost:3001/api/users/search?query=${encodeURIComponent(
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             searchTerm
           )}`
         );

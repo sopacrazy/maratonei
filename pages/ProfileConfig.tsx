@@ -20,6 +20,7 @@ const THEMES: Record<string, string> = {
 // --- LISTA EXPANDIDA DE AVATARES (Vários Estilos) ---
 const AVATARS = [
   // Estilo Micah (Clean)
+<<<<<<< HEAD
   "http://api.dicebear.com/9.x/micah/svg?seed=Felix",
   "http://api.dicebear.com/9.x/micah/svg?seed=Aneka",
   // Estilo Notionists (Preto e Branco Moderno)
@@ -41,6 +42,29 @@ const AVATARS = [
   "http://api.dicebear.com/9.x/pixel-art/svg?seed=Mario",
   // Estilo Robôs (Fun)
   "http://api.dicebear.com/9.x/bottts/svg?seed=C3PO",
+=======
+  "https://api.dicebear.com/9.x/micah/svg?seed=Felix",
+  "https://api.dicebear.com/9.x/micah/svg?seed=Aneka",
+  // Estilo Notionists (Preto e Branco Moderno)
+  "https://api.dicebear.com/9.x/notionists/svg?seed=Callie",
+  "https://api.dicebear.com/9.x/notionists/svg?seed=Bandit",
+  // Estilo Adventurer (RPG / Cartoon)
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Cookie",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Gizmo",
+  // Estilo Avataaars (Clássico Tech)
+  "https://api.dicebear.com/9.x/avataaars/svg?seed=Scooby",
+  "https://api.dicebear.com/9.x/avataaars/svg?seed=Velma",
+  // Estilo Lorelei (Artístico)
+  "https://api.dicebear.com/9.x/lorelei/svg?seed=Sasha",
+  "https://api.dicebear.com/9.x/lorelei/svg?seed=Willow",
+  // Estilo Open Peeps (Desenhado a Mão)
+  "https://api.dicebear.com/9.x/open-peeps/svg?seed=Buddy",
+  "https://api.dicebear.com/9.x/open-peeps/svg?seed=Granny",
+  // Estilo Pixel Art (Retro)
+  "https://api.dicebear.com/9.x/pixel-art/svg?seed=Mario",
+  // Estilo Robôs (Fun)
+  "https://api.dicebear.com/9.x/bottts/svg?seed=C3PO",
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 ];
 
 const ProfileConfig: React.FC<ProfileConfigProps> = ({
@@ -101,7 +125,11 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
       if (!userId) throw new Error("Usuário não identificado.");
 
       const response = await fetch(
+<<<<<<< HEAD
         `http://72.61.57.51:3001/api/users/${userId}`,
+=======
+        `http://localhost:3001/api/users/${userId}`,
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -198,7 +226,11 @@ const ProfileConfig: React.FC<ProfileConfigProps> = ({
               <img
                 src={
                   formData.avatar ||
+<<<<<<< HEAD
                   "http://api.dicebear.com/9.x/micah/svg?seed=placeholder"
+=======
+                  "https://api.dicebear.com/9.x/micah/svg?seed=placeholder"
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                 }
                 alt="Avatar"
                 className="w-full h-full rounded-full bg-slate-200 object-cover"

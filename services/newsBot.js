@@ -7,7 +7,11 @@ const parser = new Parser();
 // CONFIGURAÇÕES
 const BOT_USER_ID = 16;
 const RSS_FEED_URL =
+<<<<<<< HEAD
   "http://news.google.com/rss/search?q=s%C3%A9ries+tv+netflix+hbo+amazon+prime&hl=pt-BR&gl=BR&ceid=BR:pt-419";
+=======
+  "https://news.google.com/rss/search?q=s%C3%A9ries+tv+netflix+hbo+amazon+prime&hl=pt-BR&gl=BR&ceid=BR:pt-419";
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 
 const NEWS_TEMPLATES = [
   "🔴 Plantão Maratonei:",
@@ -91,6 +95,11 @@ async function postCuriosity(lastPosts) {
   // Texto limpo (sem o nome da série aqui, pois vai para o CHIP)
   const postText = `${template}\n${curiosity.text}`;
 
+<<<<<<< HEAD
+=======
+  console.log(`💡 Maratonei Oficial: Curiosidade sobre ${curiosity.series}`);
+
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const [postResult] = await db.query(
     "INSERT INTO ma_posts (user_id, text, series_title, is_spoiler) VALUES (?, ?, ?, ?)",
     [BOT_USER_ID, postText, curiosity.series, false]
@@ -115,6 +124,11 @@ async function postCuriosity(lastPosts) {
 
 // --- FUNÇÃO PRINCIPAL ---
 async function runBot() {
+<<<<<<< HEAD
+=======
+  console.log("📡 Maratonei Oficial: Buscando atualizações...");
+
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   try {
     const feed = await parser.parseURL(RSS_FEED_URL);
     const latestNews =
@@ -139,10 +153,18 @@ async function runBot() {
     }
 
     if (!latestNews || isDuplicate) {
+<<<<<<< HEAD
+=======
+      console.log("💤 Sem notícias novas. Alternando para Curiosidades.");
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       await postCuriosity(lastPosts);
       return;
     }
 
+<<<<<<< HEAD
+=======
+    console.log(`🗞️ Nova Notícia: ${latestNews.title}`);
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     const template = getRandom(NEWS_TEMPLATES);
     const postText = `${template} ${latestNews.title}`;
 
@@ -170,6 +192,11 @@ async function runBot() {
         }),
       ]
     );
+<<<<<<< HEAD
+=======
+
+    console.log("✅ Post Oficial Publicado!");
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   } catch (error) {
     console.error("❌ Erro no Serviço de Notícias:", error.message);
   }
@@ -181,5 +208,10 @@ export const startNewsBot = () => {
     runBot();
   });
 
+<<<<<<< HEAD
+=======
+  console.log("⏰ Feed Oficial Iniciado (Modo: Chip Ativado)");
+
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   setTimeout(() => runBot(), 5000);
 };

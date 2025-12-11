@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
+<<<<<<< HEAD
 import { UserSeries, SeriesStatus, UserProfile, UserBadge } from "../types";
+=======
+import { UserSeries, SeriesStatus, UserProfile } from "../types";
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 import StatusBadge from "../components/StatusBadge";
 import { useNavigate, useParams } from "react-router-dom";
 import Footer from "../components/Footer";
 
+<<<<<<< HEAD
 // --- MOCK DATA PARA GRUPOS ---
 const GROUPS_META = [
   {
@@ -39,6 +44,8 @@ const MOCK_BADGES: UserBadge[] = [
   },
 ];
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 interface PublicProfileProps {
   myList: UserSeries[];
   userProfile: UserProfile;
@@ -49,11 +56,19 @@ const THEMES: Record<string, string> = {
   ocean: "bg-gradient-to-br from-blue-500 via-cyan-400 to-teal-400",
   forest: "bg-gradient-to-br from-emerald-600 via-green-500 to-lime-400",
   berry: "bg-gradient-to-br from-fuchsia-600 via-purple-500 to-pink-400",
+<<<<<<< HEAD
   midnight: "linear-gradient(to right, #0f172a, #581c87, #0f172a)",
   minimal: "bg-slate-800",
 };
 
 // --- PODIUM COMPONENT (Não alterado) ---
+=======
+  midnight: "bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900",
+  minimal: "bg-slate-800",
+};
+
+// --- PODIUM COMPONENT ---
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 const TopPodium: React.FC<{
   seriesList: UserSeries[];
   onSlotClick: (rank: number) => void;
@@ -144,6 +159,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [copySuccess, setCopySuccess] = useState("");
 
+<<<<<<< HEAD
   // NOVOS ESTADOS PARA SEGUIDORES E GRUPOS
   const [isFollowModalOpen, setIsFollowModalOpen] = useState(false);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
@@ -153,6 +169,8 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   // >> 1. ESTADO PARA SELOS REAIS
   const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const myDataStr = localStorage.getItem("userProfile");
   const myId = myDataStr ? JSON.parse(myDataStr).id : null;
 
@@ -160,6 +178,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
     window.location.reload();
   };
 
+<<<<<<< HEAD
   // Função para buscar listas de seguidores (Nova)
   const fetchFollowLists = async (targetId: number) => {
     try {
@@ -206,12 +225,21 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
       setLoading(true);
       let fetchedProfileId: number;
       fetch(`http://72.61.57.51:3001/api/users/${userId}/full`)
+=======
+  useEffect(() => {
+    if (userId) {
+      setLoading(true);
+      fetch(`http://localhost:3001/api/users/${userId}/full`)
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         .then((res) => {
           if (!res.ok) throw new Error("Usuário não encontrado");
           return res.json();
         })
         .then((data) => {
+<<<<<<< HEAD
           fetchedProfileId = data.user.id;
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           setFetchedData({
             profile: data.user,
             list: data.myList.map((s: any) => ({
@@ -219,6 +247,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
               ranking: Number(s.ranking || 0),
             })),
           });
+<<<<<<< HEAD
           setTargetId(fetchedProfileId);
 
           // Buscar listas de seguidores
@@ -229,6 +258,13 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
           if (myId) {
             return fetch(
               `http://72.61.57.51:3001/api/users/${data.user.id}/is_following?followerId=${myId}`
+=======
+          setTargetId(data.user.id);
+
+          if (myId) {
+            return fetch(
+              `http://localhost:3001/api/users/${data.user.id}/is_following?followerId=${myId}`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             );
           }
         })
@@ -238,6 +274,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         })
         .catch((err) => console.error(err))
         .finally(() => setLoading(false));
+<<<<<<< HEAD
     } else if (isOwner && userProfile.id) {
       // Se for o proprietário, buscar as próprias listas
       fetchFollowLists(userProfile.id);
@@ -245,11 +282,19 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
       fetchUserBadges(userProfile.id);
     }
   }, [userId, myId, isOwner, userProfile.id]);
+=======
+    }
+  }, [userId, myId]);
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 
   const handleFollowToggle = async () => {
     if (!targetId || !myId) return;
     try {
+<<<<<<< HEAD
       const url = `http://72.61.57.51:3001/api/users/${targetId}/follow`;
+=======
+      const url = `http://localhost:3001/api/users/${targetId}/follow`;
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       const method = isFollowing ? "DELETE" : "POST";
       await fetch(url, {
         method: method,
@@ -257,8 +302,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         body: JSON.stringify({ followerId: myId }),
       });
       setIsFollowing(!isFollowing);
+<<<<<<< HEAD
       // Atualizar contagens e listas após a ação
       refreshPage();
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     } catch (error) {
       console.error("Erro ao seguir:", error);
     }
@@ -272,7 +320,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
   const handleSelectSeriesForRank = async (seriesId: string) => {
     if (!selectedRankSlot || !myId) return;
     try {
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/series/${seriesId}/rank`, {
+=======
+      await fetch(`http://localhost:3001/api/series/${seriesId}/rank`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: myId, rank: selectedRankSlot }),
@@ -328,7 +380,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
     setTimeout(() => setCopySuccess(""), 3000);
   };
 
+<<<<<<< HEAD
   const whatsappLink = `http://wa.me/?text=${encodedShareText}%20${encodedShareLink}`;
+=======
+  const whatsappLink = `https://wa.me/?text=${encodedShareText}%20${encodedShareLink}`;
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const messengerLink = `fb-messenger://share/?link=${encodedShareLink}`;
 
   const filteredList = useMemo(() => {
@@ -345,6 +401,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
     (s) => s.status === SeriesStatus.WATCHED
   );
 
+<<<<<<< HEAD
   // --- LÓGICA DE FILTRAGEM DOS GRUPOS (Baseado no Rating 1-5) ---
   const getGroupSeries = (key: string): UserSeries[] => {
     const group = GROUPS_META.find((g) => g.key === key);
@@ -358,6 +415,8 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
     );
   };
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const getHeaderStyle = () => {
     const themeKey = currentProfile?.coverTheme || "sunset";
     if (THEMES[themeKey]) return {};
@@ -419,8 +478,13 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
 
             {/* INFO DO USUÁRIO: Fica no fluxo normal (fundo branco) */}
             <div className="flex-1 text-center sm:text-left pt-2 sm:pt-4">
+<<<<<<< HEAD
               {/* --- BOTÕES DE AÇÃO --- */}
               <div className="flex items-center justify-center sm:justify-start gap-3 mb-3">
+=======
+              {/* --- MUDANÇA: BOTÕES DE AÇÃO AGORA EM PRIMEIRO LUGAR --- */}
+              <div className="flex items-center justify-center sm:justify-start gap-2 mb-3">
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                 {!isOwner && (
                   <button
                     onClick={handleFollowToggle}
@@ -434,21 +498,33 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
                   </button>
                 )}
 
+<<<<<<< HEAD
                 {/* BOTÃO COMPARTILHAR (APENAS ÍCONE) */}
                 <button
                   onClick={handleShareClick}
                   className="p-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm active:scale-95"
+=======
+                <button
+                  onClick={handleShareClick}
+                  className="px-4 py-2 rounded-full bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm flex items-center gap-2 text-sm font-bold active:scale-95"
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                   title="Compartilhar Perfil"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
+<<<<<<< HEAD
                     width="18"
                     height="18"
+=======
+                    width="16"
+                    height="16"
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                     fill="currentColor"
                     viewBox="0 0 16 16"
                   >
                     <path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5z" />
                   </svg>
+<<<<<<< HEAD
                 </button>
 
                 {/* BOTÃO SELOS (IMAGEM selo.png) */}
@@ -466,6 +542,13 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
               </div>
 
               {/* --- NOME COM SELO OFICIAL --- */}
+=======
+                  Compartilhar
+                </button>
+              </div>
+
+              {/* --- NOME COM SELO OFICIAL (ABAIXO DOS BOTÕES) --- */}
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
               <div className="flex items-center justify-center sm:justify-start gap-2">
                 <h1 className="text-2xl sm:text-4xl font-black text-slate-800 leading-tight">
                   {currentProfile.name}
@@ -485,30 +568,45 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
                 {currentProfile.bio || "Sem bio."}
               </p>
 
+<<<<<<< HEAD
               {/* STATUS ESTATÍSTICAS (Clicáveis para abrir o Modal) */}
               <div className="flex justify-center sm:justify-start gap-6 mt-6">
                 <button
                   onClick={() => setIsFollowModalOpen(true)}
                   className="text-center sm:text-left cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors -m-2"
                 >
+=======
+              {/* STATUS ESTATÍSTICAS */}
+              <div className="flex justify-center sm:justify-start gap-6 mt-6">
+                <div className="text-center sm:text-left">
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                   <div className="font-black text-xl text-slate-800">
                     {currentProfile.followersCount || 0}
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     Seguidores
                   </div>
+<<<<<<< HEAD
                 </button>
                 <button
                   onClick={() => setIsFollowModalOpen(true)}
                   className="text-center sm:text-left cursor-pointer hover:bg-slate-50 p-2 rounded-xl transition-colors -m-2"
                 >
+=======
+                </div>
+                <div className="text-center sm:text-left">
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                   <div className="font-black text-xl text-slate-800">
                     {currentProfile.followingCount || 0}
                   </div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     Seguindo
                   </div>
+<<<<<<< HEAD
                 </button>
+=======
+                </div>
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                 <div className="text-center sm:text-left">
                   <div className="font-black text-xl text-slate-800">
                     {watchingNow.length}
@@ -547,6 +645,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
           />
         </div>
 
+<<<<<<< HEAD
         {/* --- NOVOS GRUPOS DE SÉRIES --- */}
         <div className="mb-12 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
           <h2 className="text-xl font-black text-slate-800 mb-4 text-center">
@@ -604,6 +703,9 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         {/* --- FIM NOVOS GRUPOS DE SÉRIES --- */}
 
         {/* Listas (Watching / Watched) */}
+=======
+        {/* Listas */}
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         <div className="bg-white rounded-2xl p-2 mb-8 flex items-center gap-2 shadow-sm border border-slate-200">
           <span className="text-lg pl-3 text-slate-400">🔍</span>
           <input
@@ -644,7 +746,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* MODAL DE RANKING (NÃO ALTERADO) */}
+=======
+      {/* MODAL DE RANKING */}
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       {isSelectionModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in">
           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl relative">
@@ -673,7 +779,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
                       {s.title}
                     </p>
                     {s.ranking && s.ranking > 0 && (
+<<<<<<< HEAD
                       <span className="text-[10px] text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full font-bold">
+=======
+                      <span className="text-[10px] text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                         Atual Top {s.ranking}
                       </span>
                     )}
@@ -685,7 +795,11 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         </div>
       )}
 
+<<<<<<< HEAD
       {/* MODAL DE COMPARTILHAMENTO (NÃO ALTERADO) */}
+=======
+      {/* MODAL DE COMPARTILHAMENTO */}
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       {isShareModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
           <div
@@ -816,6 +930,7 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         </div>
       )}
 
+<<<<<<< HEAD
       {/* NOVO MODAL DE SEGUIDORES/SEGUINDO */}
       {isFollowModalOpen && (
         <FollowersModal
@@ -835,11 +950,14 @@ const PublicProfile: React.FC<PublicProfileProps> = ({
         />
       )}
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       <Footer />
     </div>
   );
 };
 
+<<<<<<< HEAD
 // --- NOVO COMPONENTE: MODAL DE SEGUIDORES/SEGUINDO ---
 const FollowersModal: React.FC<{
   onClose: () => void;
@@ -1024,6 +1142,8 @@ const BadgesModal: React.FC<{ onClose: () => void; badges: UserBadge[] }> = ({
   );
 };
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 const ProfileListCard: React.FC<{ series: UserSeries }> = ({ series }) => (
   <div className="bg-white p-3 rounded-2xl border border-slate-100 hover:border-rose-100 hover:shadow-md transition-all flex gap-4 items-center group">
     <div className="w-12 h-16 bg-slate-200 rounded-lg overflow-hidden shrink-0 shadow-sm relative">

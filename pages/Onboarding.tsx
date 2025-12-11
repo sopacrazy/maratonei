@@ -32,7 +32,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
   const handleUpdateProfile = async () => {
     setLoading(true);
     try {
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/users/${user.id}`, {
+=======
+      await fetch(`http://localhost:3001/api/users/${user.id}`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -66,7 +70,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
   const searchSeries = async (query: string) => {
     setIsSearching(true);
     try {
+<<<<<<< HEAD
       const res = await fetch("http://72.61.57.51:3001/api/search", {
+=======
+      const res = await fetch("http://localhost:3001/api/search", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: query }),
@@ -115,7 +123,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
 
     try {
       // 1. Garante que o tema foi salvo
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/users/${user.id}`, {
+=======
+      await fetch(`http://localhost:3001/api/users/${user.id}`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -125,7 +137,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ user, onComplete }) => {
       // Aqui poderias mandar um array único para o backend se quisesses otimizar,
       // mas o loop funciona bem para poucas séries.
       for (const series of selectedSeries) {
+<<<<<<< HEAD
         await fetch("http://72.61.57.51:3001/api/series", {
+=======
+        await fetch("http://localhost:3001/api/series", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -40,9 +40,13 @@ const PostDetail: React.FC = () => {
     if (!id || !currentUser) return;
 
     // 1. Busca os dados do Post
+<<<<<<< HEAD
     fetch(
       `http://72.61.57.51:3001/api/activities/${id}?userId=${currentUser.id}`
     )
+=======
+    fetch(`http://localhost:3001/api/activities/${id}?userId=${currentUser.id}`)
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       .then((res) => res.json())
       .then((data) => {
         if (data.error) return; // Tratar erro
@@ -58,7 +62,11 @@ const PostDetail: React.FC = () => {
       .finally(() => setLoading(false));
 
     // 2. Busca os comentários (AGORA VAI FUNCIONAR COM O GET NO SERVER)
+<<<<<<< HEAD
     fetch(`http://72.61.57.51:3001/api/activities/${id}/comments`)
+=======
+    fetch(`http://localhost:3001/api/activities/${id}/comments`)
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       .then((r) => r.json())
       .then((c) => {
         if (Array.isArray(c)) setCommentsList(c);
@@ -70,7 +78,11 @@ const PostDetail: React.FC = () => {
     const newLiked = !liked;
     setLiked(newLiked);
     setLikesCount((prev) => (newLiked ? prev + 1 : prev - 1));
+<<<<<<< HEAD
     await fetch(`http://72.61.57.51:3001/api/activities/${act.id}/like`, {
+=======
+    await fetch(`http://localhost:3001/api/activities/${act.id}/like`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: currentUser.id }),
@@ -82,7 +94,11 @@ const PostDetail: React.FC = () => {
     if (!commentText.trim() || !currentUser || !act) return;
 
     const res = await fetch(
+<<<<<<< HEAD
       `http://72.61.57.51:3001/api/activities/${act.id}/comments`,
+=======
+      `http://localhost:3001/api/activities/${act.id}/comments`,
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -22,7 +22,11 @@ const TrendingRanking: React.FC<TrendingRankingProps> = ({ myList = [] }) => {
   useEffect(() => {
     if (viewMode === "global") {
       setLoading(true);
+<<<<<<< HEAD
       fetch("http://72.61.57.51:3001/api/trending")
+=======
+      fetch("http://localhost:3001/api/trending")
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         .then((res) => res.json())
         .then((data) => setGlobalTrending(data))
         .catch((err) => console.error("Erro ao buscar ranking:", err))

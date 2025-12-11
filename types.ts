@@ -49,6 +49,10 @@ export interface UserProfile {
   bio: string;
   avatar: string;
   coverTheme: string;
+<<<<<<< HEAD
+=======
+  // --- NOVOS CAMPOS ---
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   followersCount?: number;
   followingCount?: number;
 }
@@ -61,6 +65,7 @@ export interface Notification {
   is_read: boolean; // MySQL retorna 0 ou 1, tratar como boolean no front
   created_at: string;
 }
+<<<<<<< HEAD
 
 export interface UserBadge {
   key: string;
@@ -82,3 +87,5 @@ export const BADGE_MAP: Record<string, BadgeMetadata> = {
     image: "/post.png", // Caminho no servidor (pasta public)
   },
 };
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02

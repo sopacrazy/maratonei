@@ -1,7 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
+<<<<<<< HEAD
 // Interfaces (Mantenha as interfaces existentes)
+=======
+// Interfaces
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 interface CommentData {
   id: number;
   user_name: string;
@@ -23,6 +27,7 @@ interface Activity {
   has_liked: number;
 }
 
+<<<<<<< HEAD
 // NOVA INTERFACE PARA O SELO (Deve ser importada do types.ts, mas definida aqui para evitar erro de compilação)
 interface UserBadge {
   key: string;
@@ -31,6 +36,8 @@ interface UserBadge {
   image: string;
 }
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 const ALL_SERIES_MOCK = [
   "Breaking Bad",
   "Game of Thrones",
@@ -81,7 +88,11 @@ const ActivityItem: React.FC<{
     setLiked(newLiked);
     setLikesCount((prev) => (newLiked ? prev + 1 : prev - 1));
     try {
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/activities/${act.id}/like`, {
+=======
+      await fetch(`http://localhost:3001/api/activities/${act.id}/like`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: currentUser.id }),
@@ -98,7 +109,11 @@ const ActivityItem: React.FC<{
         setLoadingComments(true);
         try {
           const res = await fetch(
+<<<<<<< HEAD
             `http://72.61.57.51:3001/api/activities/${act.id}/comments`
+=======
+            `http://localhost:3001/api/activities/${act.id}/comments`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           );
           const data = await res.json();
           setCommentsList(data);
@@ -118,7 +133,11 @@ const ActivityItem: React.FC<{
     if (!commentText.trim() || !currentUser) return;
     try {
       const res = await fetch(
+<<<<<<< HEAD
         `http://72.61.57.51:3001/api/activities/${act.id}/comments`,
+=======
+        `http://localhost:3001/api/activities/${act.id}/comments`,
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -365,12 +384,16 @@ const ActivityItem: React.FC<{
 };
 
 // --- COMPONENTE PRINCIPAL ---
+<<<<<<< HEAD
 // NOVO: Adiciona interface de Props
 interface CommunityFeedProps {
   onNewBadgeAwarded: (badge: UserBadge) => void;
 }
 
 const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
+=======
+const CommunityFeed: React.FC = () => {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activeTab, setActiveTab] = useState<
@@ -394,7 +417,11 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
 
   const loadFeed = () => {
     if (!currentUser) return;
+<<<<<<< HEAD
     const url = `http://72.61.57.51:3001/api/feed?userId=${currentUser.id}&type=${activeTab}`;
+=======
+    const url = `http://localhost:3001/api/feed?userId=${currentUser.id}&type=${activeTab}`;
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
@@ -451,8 +478,12 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
   const handlePostSubmit = async () => {
     if (!newPost.trim() || !currentUser) return;
     try {
+<<<<<<< HEAD
       // Modifica a chamada para capturar o objeto de resposta completo
       const response = await fetch("http://72.61.57.51:3001/api/posts", {
+=======
+      const response = await fetch("http://localhost:3001/api/posts", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -462,13 +493,17 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
           isSpoiler,
         }),
       });
+<<<<<<< HEAD
 
       const data = await response.json(); // Lê o body da resposta
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       if (response.ok) {
         setNewPost("");
         setSelectedSeries(null);
         setIsSpoiler(false);
+<<<<<<< HEAD
         loadFeed(); // Recarrega o feed para mostrar o novo post
 
         // NOVO: Verifica e notifica sobre o novo selo
@@ -477,6 +512,9 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
         }
       } else {
         console.error("Erro ao postar:", data.error || "Falha desconhecida");
+=======
+        loadFeed();
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       }
     } catch (e) {
       console.error(e);
@@ -486,7 +524,11 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ onNewBadgeAwarded }) => {
   const confirmDelete = async () => {
     if (!postToDelete) return;
     try {
+<<<<<<< HEAD
       await fetch(`http://72.61.57.51:3001/api/posts/${postToDelete}`, {
+=======
+      await fetch(`http://localhost:3001/api/posts/${postToDelete}`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
         method: "DELETE",
       });
       setActivities(

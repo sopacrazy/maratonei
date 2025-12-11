@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
+<<<<<<< HEAD
 import {
   UserSeries,
   SeriesStatus,
@@ -7,6 +8,9 @@ import {
   UserBadge,
   BADGE_MAP, // <-- Importado o mapa de metadados
 } from "../types";
+=======
+import { UserSeries, SeriesStatus, Series, UserProfile } from "../types";
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 import SeriesCard from "../components/SeriesCard";
 import CommunityFeed from "../components/CommunityFeed";
 import MatchCinefilo from "../components/MatchCinefilo";
@@ -19,9 +23,12 @@ interface DashboardProps {
   onUpdateStatus: (series: Series, status: SeriesStatus) => void;
   onRemove: (id: string) => void;
   onUpdateNote: (id: string, note: string) => void;
+<<<<<<< HEAD
   // NOVAS PROPS DO APP.TSX:
   userBadges: UserBadge[];
   onUpdateBadges: (newBadge: UserBadge) => void;
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 }
 
 enum DashboardTab {
@@ -39,8 +46,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   onUpdateStatus,
   onRemove,
   onUpdateNote,
+<<<<<<< HEAD
   userBadges, // Lista de selos do App.tsx
   onUpdateBadges, // Função para atualizar a lista no App.tsx
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 }) => {
   const [activeTab, setActiveTab] = useState<DashboardTab | SeriesStatus>(
     DashboardTab.FEED
@@ -52,6 +62,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isExpanded, setIsExpanded] = useState(false);
 
+<<<<<<< HEAD
   // ESTADOS PARA OS SELOS
   const [isBadgesModalOpen, setIsBadgesModalOpen] = useState(false);
   const [newBadge, setNewBadge] = useState<UserBadge | null>(null);
@@ -68,6 +79,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsBadgesModalOpen(true);
   };
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   // --- Lógica de Listas Filtradas ---
   const watchingList = useMemo(
     () => myList.filter((s) => s.status === SeriesStatus.WATCHING),
@@ -118,7 +131,11 @@ const Dashboard: React.FC<DashboardProps> = ({
       setLoadingRecs(true);
       try {
         const response = await fetch(
+<<<<<<< HEAD
           "http://72.61.57.51:3001/api/recommendations",
+=======
+          "http://localhost:3001/api/recommendations",
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -146,6 +163,18 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   // --- FUNÇÃO DE AVALIAÇÃO (RATING) ---
   const handleRate = async (seriesId: string, rating: number) => {
+<<<<<<< HEAD
+=======
+    // 1. Atualização Otimista (Visual Imediato)
+    // Precisamos atualizar o myList no App.tsx via prop ou forçar reload,
+    // mas como o myList vem de prop, o ideal seria ter uma função onUpdateRating.
+    // Como simplificação, atualizamos apenas visualmente se tivermos acesso ao setMyList localmente
+    // ou disparamos o request e confiamos que o user vai ver na proxima carga.
+
+    // NOTA: Para refletir imediatamente, o ideal era o onUpdateStatus ou uma nova prop lidar com isso.
+    // Mas vamos focar na persistência:
+
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     const series = myList.find((s) => s.id === seriesId);
     if (!series) return;
 
@@ -154,7 +183,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     if (uid) {
       try {
+<<<<<<< HEAD
         await fetch(`http://72.61.57.51:3001/api/series/${seriesId}/rating`, {
+=======
+        await fetch(`http://localhost:3001/api/series/${seriesId}/rating`, {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -216,6 +249,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left w-full md:w-auto flex flex-col items-center md:items-start">
+<<<<<<< HEAD
             {/* VERSÃO 2.2: Header Reorganizado */}
             <div className="flex items-center gap-4 mb-2">
               {" "}
@@ -250,11 +284,30 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onClick={() => navigate("/profile")}
                 // Tamanho e sombra uniformizados
                 className="bg-white text-slate-800 px-4 py-2.5 rounded-xl font-bold shadow-md hover:bg-slate-50 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 text-sm"
+=======
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-2 drop-shadow-md">
+              Olá, {userProfile.name || "Visitante"}!
+              <img
+                src={userProfile.avatar}
+                alt="avatar"
+                className="w-8 h-8 rounded-full border border-white/50 bg-white object-cover ml-2"
+              />
+            </h1>
+            <p className="text-white/90 font-medium mb-4 max-w-md drop-shadow-md">
+              {userProfile.bio ||
+                "Gerencie suas séries e adicione notas pessoais para o seu perfil."}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/profile")}
+                className="bg-white text-slate-800 px-5 py-2.5 rounded-full font-bold shadow-lg hover:bg-slate-50 hover:scale-105 transition-all flex items-center justify-center gap-2 text-sm"
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
               >
                 Ver Perfil
               </button>
               <button
                 onClick={() => navigate("/settings")}
+<<<<<<< HEAD
                 // Tamanho e sombra uniformizados
                 className="bg-white/20 text-white border border-white/30 px-4 py-2.5 rounded-xl font-bold hover:bg-white/30 transition-all text-sm backdrop-blur-sm shadow-md hover:scale-[1.02]"
               >
@@ -272,6 +325,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 />
                 Meus Selos
               </button>
+=======
+                className="bg-white/20 text-white border border-white/30 px-5 py-2.5 rounded-full font-bold hover:bg-white/30 transition-all text-sm backdrop-blur-sm"
+              >
+                Editar
+              </button>
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             </div>
           </div>
           <div className="flex gap-3 justify-center">
@@ -299,9 +358,13 @@ const Dashboard: React.FC<DashboardProps> = ({
         {/* Main Content Column */}
         <div className="lg:col-span-2 space-y-8">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+<<<<<<< HEAD
             {/* CONTAINER DE NAVEGAÇÃO: Apenas Tabs */}
             <div className="bg-white p-1.5 rounded-full shadow-sm border border-slate-200 inline-flex gap-1 overflow-x-auto max-w-full">
               {/* Mapeamento das Tabs (FEED, WATCHING, etc.) */}
+=======
+            <div className="bg-white p-1.5 rounded-full shadow-sm border border-slate-200 inline-flex gap-1 overflow-x-auto max-w-full">
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
               {[
                 DashboardTab.FEED,
                 SeriesStatus.WATCHING,
@@ -348,7 +411,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                 );
               })}
             </div>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             {activeTab !== DashboardTab.FEED && (
               <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
                 <button
@@ -403,8 +469,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           {activeTab === DashboardTab.FEED && (
             <div className="animate-fade-in">
+<<<<<<< HEAD
               {/* PASSAR A NOVA PROP DE CALLBACK */}
               <CommunityFeed onNewBadgeAwarded={handleNewBadgeAwarded} />
+=======
+              <CommunityFeed />
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
             </div>
           )}
 
@@ -504,7 +574,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-4">
                 <span className="bg-white/10 p-2 rounded-lg text-xl">⏳</span>
+<<<<<<< HEAD
                 <h3 className="font-bold text-lg">Tempo de vida em Series</h3>
+=======
+                <h3 className="font-bold text-lg">Tempo de Vida</h3>
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
               </div>
               {timeStats.totalMinutes === 0 ? (
                 <p className="text-sm text-slate-400">
@@ -571,6 +645,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
+<<<<<<< HEAD
 
       {/* MODAL DE PARABÉNS (Concedido após 5 posts) */}
       {newBadge && (
@@ -726,6 +801,8 @@ const BadgesModal: React.FC<{ onClose: () => void; badges: UserBadge[] }> = ({
           </div>
         )}
       </div>
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     </div>
   );
 };

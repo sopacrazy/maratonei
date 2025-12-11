@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 // sopacrazy/maratonei/maratonei-6ecbef1f8035315057e2f76abad02ee127fa1a02/App.tsx
 
+=======
+//
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 import React, { useState, useEffect } from "react";
 import {
   HashRouter,
@@ -15,6 +19,7 @@ import PublicProfile from "./pages/PublicProfile";
 import ProfileConfig from "./pages/ProfileConfig";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
+<<<<<<< HEAD
 import PostDetail from "./pages/PostDetail";
 // Assumindo que você importou o BADGE_MAP e UserBadge do types.ts
 import {
@@ -27,6 +32,10 @@ import {
 } from "./types";
 // Importar a nova página da loja
 import BadgeStore from "./pages/BadgeStore";
+=======
+import PostDetail from "./pages/PostDetail"; // Nova página de post
+import { UserSeries, Series, SeriesStatus, UserProfile } from "./types";
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 
 const LayoutWrapper: React.FC<{
   children: React.ReactNode;
@@ -42,6 +51,10 @@ const LayoutWrapper: React.FC<{
   return <Layout onLogout={onLogout}>{children}</Layout>;
 };
 
+<<<<<<< HEAD
+=======
+// Rota Protegida Inteligente
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
 const ProtectedRoute: React.FC<{
   isAuthenticated: boolean;
   needsOnboarding: boolean;
@@ -92,9 +105,12 @@ const App: React.FC = () => {
   const [myList, setMyList] = useState<UserSeries[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!userId);
 
+<<<<<<< HEAD
   // NOVO ESTADO: Lista de Selos Conquistados
   const [userBadges, setUserBadges] = useState<UserBadge[]>([]);
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const fetchUserData = async () => {
     if (!userId) {
       setIsLoading(false);
@@ -103,7 +119,11 @@ const App: React.FC = () => {
 
     try {
       const response = await fetch(
+<<<<<<< HEAD
         `http://72.61.57.51:3001/api/users/${userId}/full`
+=======
+        `http://localhost:3001/api/users/${userId}/full`
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
       );
       if (response.ok) {
         const data = await response.json();
@@ -111,6 +131,7 @@ const App: React.FC = () => {
         setMyList(data.myList);
         localStorage.setItem("userProfile", JSON.stringify(data.user));
       }
+<<<<<<< HEAD
 
       // NOVO: Buscar Selos do usuário (PARA PERSISTÊNCIA)
       const badgesRes = await fetch(
@@ -137,6 +158,8 @@ const App: React.FC = () => {
 
         setUserBadges(mappedBadges);
       }
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
     } finally {
@@ -172,10 +195,17 @@ const App: React.FC = () => {
     setUserId(null);
     setMyList([]);
     setUserProfile(DEFAULT_PROFILE);
+<<<<<<< HEAD
     setUserBadges([]);
     localStorage.clear();
   };
 
+=======
+    localStorage.clear();
+  };
+
+  // --- LÓGICA INTELIGENTE DE STATUS E ATIVIDADE ---
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const handleUpdateStatus = async (series: Series, status: SeriesStatus) => {
     // 1. Atualização Otimista (Visual Imediato)
     setMyList((prev) => {
@@ -198,7 +228,11 @@ const App: React.FC = () => {
       const exists = myList.some((s) => s.title === series.title);
 
       if (exists) {
+<<<<<<< HEAD
         await fetch("http://72.61.57.51:3001/api/series/status", {
+=======
+        await fetch("http://localhost:3001/api/series/status", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -209,7 +243,11 @@ const App: React.FC = () => {
           }),
         });
       } else {
+<<<<<<< HEAD
         await fetch("http://72.61.57.51:3001/api/series", {
+=======
+        await fetch("http://localhost:3001/api/series", {
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -232,7 +270,11 @@ const App: React.FC = () => {
       try {
         const encodedTitle = encodeURIComponent(seriesToRemove.title);
         await fetch(
+<<<<<<< HEAD
           `http://72.61.57.51:3001/api/series/${userId}/${encodedTitle}`,
+=======
+          `http://localhost:3001/api/series/${userId}/${encodedTitle}`,
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           {
             method: "DELETE",
           }
@@ -248,6 +290,7 @@ const App: React.FC = () => {
       prev.map((s) => (s.id === id ? { ...s, personalNote: note } : s))
     );
 
+<<<<<<< HEAD
   // NOVO: Função para o Dashboard atualizar a lista de selos
   const handleUpdateBadges = (newBadge: UserBadge) => {
     setUserBadges((prev) => {
@@ -256,6 +299,8 @@ const App: React.FC = () => {
     });
   };
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
   const needsOnboarding =
     !isLoading && (!userProfile.bio || userProfile.bio.trim() === "");
 
@@ -293,9 +338,12 @@ const App: React.FC = () => {
                   onUpdateStatus={handleUpdateStatus}
                   onRemove={handleRemove}
                   onUpdateNote={handleUpdateNote}
+<<<<<<< HEAD
                   // Adicionado props de selo
                   userBadges={userBadges}
                   onUpdateBadges={handleUpdateBadges}
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
                 />
               </ProtectedRoute>
             }
@@ -312,6 +360,7 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+<<<<<<< HEAD
 
           {/* Rota para a Loja de Selos */}
           <Route
@@ -328,6 +377,8 @@ const App: React.FC = () => {
             }
           />
 
+=======
+>>>>>>> 6ecbef1f8035315057e2f76abad02ee127fa1a02
           <Route
             path="/settings"
             element={
